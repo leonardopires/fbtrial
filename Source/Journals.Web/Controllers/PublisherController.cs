@@ -39,9 +39,11 @@ namespace Journals.Web.Controllers
         public ActionResult GetFile(int Id)
         {
             Journal j = _journalRepository.GetJournalById(Id);
-            if (j == null)
-                throw new System.Web.Http.HttpResponseException(new HttpResponseMessage(HttpStatusCode.NotFound));
 
+            if (j == null)
+            {
+                return HttpNotFound();
+            }
             return File(j.Content, j.ContentType);
         }
 
