@@ -151,10 +151,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Controllers\ControllerTest.cs" />
-    <Compile Include="Controllers\PublisherControllerTest.cs" />
+    <Compile Include="Controllers\DataControllerTest.cs" />
+    <Compile Include="Controllers\ErrorControllerTest.cs" />
+    <Compile Include="Controllers\HomeControllerTest.cs" />
+    <Compile Include="Controllers\MvcControllerTest.cs" />
+    <Compile Include="Controllers\PublisherDataControllerTest.cs" />
     <Compile Include="Controllers\ControllerTestExtensions.cs" />
-    <Compile Include="Data\JournalTestData.cs" />
+    <Compile Include="TestData\JournalTestData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

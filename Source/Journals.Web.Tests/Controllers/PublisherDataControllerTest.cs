@@ -12,7 +12,7 @@ using System.Web.Mvc;
 using System.Web.Security;
 using FluentAssertions;
 using FluentAssertions.Mvc;
-using Journals.Web.Tests.Data;
+using Journals.Web.Tests.TestData;
 using Microsoft.Data.OData.Query.SemanticAst;
 using Newtonsoft.Json;
 using Telerik.JustMock;
@@ -21,10 +21,10 @@ using Xunit;
 
 namespace Journals.Web.Tests.Controllers
 {
-    public class PublisherControllerTest : ControllerTest<PublisherController, Journal, IJournalRepository, JournalTestData>
+    public class PublisherDataControllerTest : DataControllerTest<PublisherController, Journal, IJournalRepository, JournalTestData>
     {
 
-        public PublisherControllerTest()
+        public PublisherDataControllerTest()
         {
             Mapper.CreateMap<Journal, JournalViewModel>();
             Mapper.CreateMap<JournalViewModel, Journal>();
@@ -56,18 +56,11 @@ namespace Journals.Web.Tests.Controllers
         public static List<Journal> DefaultData => Data.GetDefaultData();
 
 
-        protected override void SetUpRepository(List<Journal> models, IJournalRepository modelRepository, MembershipUser userMock)
-        {
-            Data.SetUpRepository(models, modelRepository, userMock);
-        }
-        
-
-
         [Theory]
         [InlineData(2)]
         public void Index_Returns_All_Journals(int count)
         {
-            var controller = GetController(DefaultData, SetUpRepository);
+            var controller = GetController();
 
             var expected = Mapper.Map<List<Journal>, List<JournalViewModel>>(DefaultData);
 
@@ -93,7 +86,7 @@ namespace Journals.Web.Tests.Controllers
         [Fact]
         public void Create_Returns_View_On_Get()
         {
-            var controller = GetController(DefaultData, SetUpRepository);
+            var controller = GetController();
 
             var result = controller.Create();
 
@@ -105,7 +98,7 @@ namespace Journals.Web.Tests.Controllers
         [InlineData(2, "application/pdf")]
         public void GetFile_Returns_File(int fileId, string expectedContentType)
         {
-            var controller = GetController(DefaultData, SetUpRepository);
+            var controller = GetController();
             var result = controller.GetFile(fileId);
 
             result.Should().BeOfType<FileContentResult>().Which.ContentType.Should().Be(expectedContentType);
@@ -115,7 +108,7 @@ namespace Journals.Web.Tests.Controllers
         [MemberData(nameof(InvalidIdsAndExpectedStatusCodes))]
         public void GetFile_Returns_StatusCode_OnErrors(int fileId, HttpStatusCode httpStatus)
         {
-            var controller = GetController(DefaultData, SetUpRepository);
+            var controller = GetController();
             var result = controller.GetFile(fileId);
 
             result.Should().BeAssignableTo<HttpStatusCodeResult>().Which.StatusCode.Should().Be((int)httpStatus);
@@ -125,9 +118,9 @@ namespace Journals.Web.Tests.Controllers
         [MemberData(nameof(InvalidJournalViewModels))]
         public void Create_Post_With_Invalid_Args_Returns_StatusCode(JournalViewModel journal, HttpStatusCode statusCode)
         {
-            var controller = GetController(DefaultData, SetUpRepository, "POST");
+            var controller = GetController("POST");
 
-            controller.ValidateViewModel(journal);
+            controller.ValidateModel(journal);
             var result = controller.Create(journal);
 
 
@@ -148,9 +141,9 @@ namespace Journals.Web.Tests.Controllers
         [MemberData(nameof(ValidJournalViewModelsForCreate))]
         public void Create_Post_With_Valid_Args_Redirects_To_Index(JournalViewModel journal)
         {
-            var controller = GetController(DefaultData, SetUpRepository, "POST");
+            var controller = GetController("POST");
 
-            controller.ValidateViewModel(journal);
+            controller.ValidateModel(journal);
             var result = controller.Create(journal);
 
             controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid: {0}", controller.ModelState.Dump());
@@ -163,7 +156,7 @@ namespace Journals.Web.Tests.Controllers
         [InlineData(2)]
         public void Delete_Id_With_Valid_Id_Shows_Confirmation_Page(int id)
         {
-            var controller = GetController(DefaultData, SetUpRepository);
+            var controller = GetController();
 
             var result = controller.Delete(id);
 
@@ -179,7 +172,7 @@ namespace Journals.Web.Tests.Controllers
         [MemberData(nameof(InvalidIdsAndExpectedStatusCodes))]
         public void Delete_Id_With_Valid_Id_Shows_Error(int id, HttpStatusCode statusCode)
         {
-            var controller = GetController(DefaultData, SetUpRepository);
+            var controller = GetController();
 
             var result = controller.Delete(id);
 
@@ -196,11 +189,11 @@ namespace Journals.Web.Tests.Controllers
             int count = int.MinValue;
             List<Journal> items = null;
             var controller = GetController(DefaultData,
-                                           (m, r, u) =>
+                                           (m, r) =>
                                            {
                                                items = m;
                                                count = items.Count;
-                                               SetUpRepository(m, r, u);
+                                               Data.SetUpRepository(m, r);
                                            });
 
             var journal = items.FirstOrDefault(i => i.Id == id);
@@ -222,14 +215,14 @@ namespace Journals.Web.Tests.Controllers
             int count = int.MinValue;
             List<Journal> items = null;
             var controller = GetController(DefaultData,
-                                           (m, r, u) =>
+                                           (m, r) =>
                                            {
                                                items = m;
                                                count = items.Count;
-                                               SetUpRepository(m, r, u);
+                                               Data.SetUpRepository(m, r);
                                            });
 
-            controller.ValidateViewModel(viewModel);
+            controller.ValidateModel(viewModel);
             var result = controller.Delete(viewModel);
 
             result.Should()
@@ -245,7 +238,7 @@ namespace Journals.Web.Tests.Controllers
         [InlineData(2)]
         public void Edit_Id_With_Valid_Id_Shows_Edit_Page(int id)
         {
-            var controller = GetController(DefaultData, SetUpRepository);
+            var controller = GetController();
 
             var result = controller.Edit(id);
 
@@ -262,7 +255,7 @@ namespace Journals.Web.Tests.Controllers
         [MemberData(nameof(InvalidIdsAndExpectedStatusCodes))]
         public void Edit_Id_With_Valid_Id_Shows_Error(int id, HttpStatusCode statusCode)
         {
-            var controller = GetController(DefaultData, SetUpRepository);
+            var controller = GetController();
 
             var result = controller.Edit(id);
 
@@ -279,14 +272,14 @@ namespace Journals.Web.Tests.Controllers
             int count = int.MinValue;
             List<Journal> items = null;
             var controller = GetController(DefaultData,
-                                           (m, r, u) =>
+                                           (m, r) =>
                                            {
                                                items = m;
                                                count = items.Count;
-                                               SetUpRepository(m, r, u);
+                                               Data.SetUpRepository(m, r);
                                            }, "POST");
 
-            controller.ValidateViewModel(viewModel);
+            controller.ValidateModel(viewModel);
             var result = controller.Edit(viewModel);
 
             items.Should().HaveCount(count, "nothing should be deleted nor inserted in an update operation");
@@ -299,14 +292,14 @@ namespace Journals.Web.Tests.Controllers
 
             edited.Should().NotBeNull();
 
-            edited.Id.Should().Be(viewModel.Id, EXPECTATION_REALITY, nameof(edited.Id), edited.Id, viewModel.Id);
-            edited.FileName.Should().Be(viewModel.FileName, EXPECTATION_REALITY, nameof(edited.FileName), edited.FileName, viewModel.FileName);
+            edited.Id.Should().Be(viewModel.Id);
+            edited.FileName.Should().Be(viewModel.FileName);
             edited.Content.Should().NotBeNull().And.Match(c => c.SequenceEqual(viewModel.Content));
-            edited.ContentType.Should().Be(viewModel.ContentType, EXPECTATION_REALITY, nameof(edited.ContentType), edited.ContentType, viewModel.ContentType);
+            edited.ContentType.Should().Be(viewModel.ContentType);
 
-            edited.Title.Should().Be(viewModel.Title, EXPECTATION_REALITY, nameof(edited.Title), edited.Title, viewModel.Title);
-            edited.Description.Should().Be(viewModel.Description, EXPECTATION_REALITY, nameof(edited.Description), edited.Description, viewModel.Description);
-            edited.UserId.Should().Be(viewModel.UserId, EXPECTATION_REALITY, nameof(edited.UserId), edited.UserId, viewModel.UserId);
+            edited.Title.Should().Be(viewModel.Title);
+            edited.Description.Should().Be(viewModel.Description);
+            edited.UserId.Should().Be(viewModel.UserId);
 
 
             result.Should().BeRedirectToRouteResult().WithAction("Index");
@@ -324,17 +317,17 @@ namespace Journals.Web.Tests.Controllers
             int count = int.MinValue;
             List<Journal> items = null;
             var controller = GetController(DefaultData,
-                                           (m, r, u) =>
+                                           (m, r) =>
                                            {
                                                items = m;
                                                count = items.Count;
-                                               SetUpRepository(m, r, u);
+                                               Data.SetUpRepository(m, r);
                                            });
 
             var original = items.Find(i => i.Id == viewModel.Id);
             var originalViewModel = Mapper.Map<Journal, JournalUpdateViewModel>(original);
 
-            controller.ValidateViewModel(viewModel);
+            controller.ValidateModel(viewModel);
             var result = controller.Edit(viewModel);
 
             if (expectedStatusCode == HttpStatusCode.OK)
@@ -343,48 +336,19 @@ namespace Journals.Web.Tests.Controllers
 
                 var edited = items.Find(j => j.Id == viewModel.Id);
 
-                edited.Id.Should()
-                      .Be(originalViewModel.Id, EXPECTATION_REALITY, nameof(edited.Id), edited.Id, originalViewModel.Id);
+                edited.Id.Should().Be(originalViewModel.Id);
 
-                edited.FileName.Should()
-                      .Be(
-                          originalViewModel.FileName,
-                          EXPECTATION_REALITY,
-                          nameof(edited.FileName),
-                          edited.FileName,
-                          originalViewModel.FileName);
+                edited.FileName.Should().Be(originalViewModel.FileName);
 
                 edited.Content.Should().NotBeNull().And.Match(c => c.SequenceEqual(originalViewModel.Content));
 
-                edited.ContentType.Should()
-                      .Be(
-                          originalViewModel.ContentType,
-                          EXPECTATION_REALITY,
-                          nameof(edited.ContentType),
-                          edited.ContentType,
-                          originalViewModel.ContentType);
+                edited.ContentType.Should().Be(originalViewModel.ContentType);
 
-                edited.Title.Should()
-                      .Be(
-                          originalViewModel.Title,
-                          EXPECTATION_REALITY,
-                          nameof(edited.Title),
-                          edited.Title,
-                          originalViewModel.Title);
-                edited.Description.Should()
-                      .Be(
-                          originalViewModel.Description,
-                          EXPECTATION_REALITY,
-                          nameof(edited.Description),
-                          edited.Description,
-                          originalViewModel.Description);
-                edited.UserId.Should()
-                      .Be(
-                          originalViewModel.UserId,
-                          EXPECTATION_REALITY,
-                          nameof(edited.UserId),
-                          edited.UserId,
-                          originalViewModel.UserId);
+                edited.Title.Should().Be(originalViewModel.Title);
+
+                edited.Description.Should().Be(originalViewModel.Description);
+
+                edited.UserId.Should().Be(originalViewModel.UserId);
 
 
                 result.Should().BeViewResult("validation error should appear to the user")

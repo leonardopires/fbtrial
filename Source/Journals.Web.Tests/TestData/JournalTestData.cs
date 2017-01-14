@@ -13,13 +13,31 @@ using Journals.Repository;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
 
-namespace Journals.Web.Tests.Data
+namespace Journals.Web.Tests.TestData
 {
-    public class JournalTestData
+
+    public interface ITestData<TModel>
+    {
+        List<TModel> GetDefaultData();
+    }
+
+    public interface ITestData<TModel, in TRepository> : ITestData<TModel>
     {
 
-        public void SetUpRepository(List<Journal> models, IJournalRepository modelRepository, MembershipUser userMock)
+        void SetUpRepository(List<TModel> models, TRepository modelRepository);
+    }
+
+    public class JournalTestData : ITestData<Journal, IJournalRepository>
+    {
+
+        public void SetUpRepository(List<Journal> models, IJournalRepository modelRepository)
         {
+            var membershipRepository = Mock.Create<IStaticMembershipService>();
+            var userMock = Mock.Create<MembershipUser>();
+
+            userMock.Arrange(u => u.ProviderUserKey).Returns(1);
+            membershipRepository.Arrange(m => m.GetUser()).Returns(userMock);
+        
             modelRepository.Arrange((r) => r.GetAllJournals((int)userMock.ProviderUserKey)).Returns(models);
 
             foreach (var journal in models)
