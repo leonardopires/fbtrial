@@ -93,13 +93,20 @@ namespace Journals.Web.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Delete(JournalViewModel journal)
         {
+            ActionResult result;
+
             var selectedJournal = Mapper.Map<JournalViewModel, Journal>(journal);
-
             var opStatus = _journalRepository.DeleteJournal(selectedJournal);
-            if (!opStatus.Status)
-                throw new System.Web.Http.HttpResponseException(new HttpResponseMessage(HttpStatusCode.NotFound));
 
-            return RedirectToAction(nameof(Index));
+            if (opStatus.Status)
+            {
+                result = RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                result = HttpNotFound();
+            }
+            return result;
         }
 
         public ActionResult Edit(int Id)
@@ -125,19 +132,30 @@ namespace Journals.Web.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(JournalUpdateViewModel journal)
         {
+
+            ActionResult result;
+
             if (ModelState.IsValid)
             {
                 var selectedJournal = Mapper.Map<JournalUpdateViewModel, Journal>(journal);
                 JournalHelper.PopulateFile(journal.File, selectedJournal);
 
                 var opStatus = _journalRepository.UpdateJournal(selectedJournal);
-                if (!opStatus.Status)
-                    throw new System.Web.Http.HttpResponseException(new HttpResponseMessage(HttpStatusCode.NotFound));
 
-                return RedirectToAction(nameof(Index));
+                if (!opStatus.Status)
+                {
+                    result = new HttpStatusCodeResult(HttpStatusCode.InternalServerError);
+                }
+                else
+                {
+                    result = RedirectToAction(nameof(Index));
+                }
             }
             else
-                return View(nameof(Edit), journal);
+            {
+                result = View(nameof(Edit), journal);
+            }
+            return result;
         }
 
         protected override void OnException(ExceptionContext filterContext)

@@ -11,11 +11,18 @@ using Telerik.JustMock;
 
 namespace Journals.Web.Tests.Controllers
 {
+    /// <summary>
+    /// Implements the base functionality for a test that exercises an ASP.NET MVC controller
+    /// </summary>
+    /// <typeparam name="TController">The type of the t controller.</typeparam>
+    /// <typeparam name="TModel">The type of the t model.</typeparam>
+    /// <typeparam name="TRepository">The type of the t repository.</typeparam>
+    /// <typeparam name="TTestData">The type of the t test data.</typeparam>
     public abstract class ControllerTest<TController, TModel, TRepository, TTestData> : IDisposable
-        where TController : Controller
-        where TModel : class, new()
-        where TRepository : IDisposable
-        where TTestData : class, new()
+            where TController : Controller
+            where TModel : class, new()
+            where TRepository : IDisposable
+            where TTestData : class, new()
     {
         private static readonly Lazy<TTestData> _data = new Lazy<TTestData>(() => new TTestData());
 

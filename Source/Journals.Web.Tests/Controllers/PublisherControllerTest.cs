@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Web.Http;
 using System.Web.Http.Controllers;
 using System.Web.Mvc;
 using System.Web.Security;
@@ -43,11 +44,16 @@ namespace Journals.Web.Tests.Controllers
         }
 
 
-        public static IEnumerable<object[]> InvalidJournalViewModels => Data.InvalidJournalViewModels;
+        public static IEnumerable<object[]> InvalidJournalViewModels => Data.GetInvalidJournalViewModels();
 
-        public static IEnumerable<object[]> ValidJournalViewModelsForCreate => Data.ValidJournalViewModelsForCreate;
+        public static IEnumerable<object[]> ValidJournalViewModelsForCreate => Data.GetValidJournalViewModelsForCreate();
+        public static IEnumerable<object[]> InvalidIdsAndExpectedStatusCodes => Data.GetInvalidIdsAndExpectedStatusCodes();
 
-        public static List<Journal> DefaultData => Data.DefaultData;
+        public static IEnumerable<object[]> ValidUpdatedJournals => Data.GetValidUpdatedJournals();
+
+        public static IEnumerable<object[]> InvalidUpdatedJournals => Data.GetInvalidUpdatedJournals();
+
+        public static List<Journal> DefaultData => Data.GetDefaultData();
 
 
         protected override void SetUpRepository(List<Journal> models, IJournalRepository modelRepository, MembershipUser userMock)
@@ -80,6 +86,27 @@ namespace Journals.Web.Tests.Controllers
                                                         var status = new OperationStatus() {Status = modelToRemove != null && models.Remove(modelToRemove) };
                                                         return status;
                                                     });
+
+
+            modelRepository.Arrange(i => i.UpdateJournal(Arg.IsAny<Journal>()))
+                                                            .Returns(
+                                                                (Journal a) =>
+                                                                {
+                                                                    var index = models.FindIndex(i => i.Id == a.Id);
+                                                                    var model = models[index];
+
+                                                                    model.Content = a.Content;
+                                                                    model.ContentType = a.ContentType;
+                                                                    model.FileName = a.FileName;
+                                                                    model.Description = a.Description;
+                                                                    model.ModifiedDate = a.ModifiedDate;
+                                                                    model.Title = a.Title;
+                                                                    model.UserId = a.UserId;
+
+                                                                    models[index] = model;
+
+                                                                    return new OperationStatus() { Status = a.Id != int.MaxValue };
+                                                                });
 
         }
 
@@ -133,17 +160,7 @@ namespace Journals.Web.Tests.Controllers
         }
 
         [Theory]
-        [InlineData(-1, HttpStatusCode.NotFound)]
-        [InlineData(3, HttpStatusCode.NotFound)]
-        [InlineData(4, HttpStatusCode.NotFound)]
-        [InlineData(5, HttpStatusCode.NotFound)]
-        [InlineData(6, HttpStatusCode.NotFound)]
-        [InlineData(565, HttpStatusCode.NotFound)]
-        [InlineData(int.MaxValue, HttpStatusCode.NotFound)]
-        [InlineData(int.MinValue, HttpStatusCode.NotFound)]
-        [InlineData(-55, HttpStatusCode.NotFound)]
-        [InlineData(0, HttpStatusCode.NotFound)]
-        [InlineData(32, HttpStatusCode.NotFound)]
+        [MemberData(nameof(InvalidIdsAndExpectedStatusCodes))]
         public void GetFile_Returns_StatusCode_OnErrors(int fileId, HttpStatusCode httpStatus)
         {
             var controller = GetController(DefaultData, SetUpRepository);
@@ -164,12 +181,12 @@ namespace Journals.Web.Tests.Controllers
 
             if (statusCode != HttpStatusCode.OK)
             {
-                controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid");
+                controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid: {0}", controller.ModelState.Dump());
                 result.Should().BeAssignableTo<HttpStatusCodeResult>().Which.StatusCode.Should().Be((int) statusCode, "the error should have happened in the repository");
             }
             else
             {
-                controller.ModelState.IsValid.Should().BeFalse("ModelState should be invalid");
+                controller.ModelState.IsValid.Should().BeFalse("ModelState should be invalid: {0}", controller.ModelState.Dump());
                 result.Should().NotBeOfType<HttpStatusCodeResult>("validation errors should be identified by ModelState");
                 result.Should().BeViewResult("validation errors should appear to the user").WithViewName("Create");
             }
@@ -184,7 +201,7 @@ namespace Journals.Web.Tests.Controllers
             controller.ValidateViewModel(journal);
             var result = controller.Create(journal);
 
-            controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid");
+            controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid: {0}", controller.ModelState.Dump());
             result.Should().BeRedirectToRouteResult().WithAction("Index");
         }
 
@@ -207,12 +224,7 @@ namespace Journals.Web.Tests.Controllers
         }
 
         [Theory]
-        [InlineData(3, HttpStatusCode.NotFound)]
-        [InlineData(4, HttpStatusCode.NotFound)]
-        [InlineData(-1, HttpStatusCode.NotFound)]
-        [InlineData(0, HttpStatusCode.NotFound)]
-        [InlineData(int.MaxValue, HttpStatusCode.NotFound)]
-        [InlineData(int.MinValue, HttpStatusCode.NotFound)]
+        [MemberData(nameof(InvalidIdsAndExpectedStatusCodes))]
         public void Delete_Id_With_Valid_Id_Shows_Error(int id, HttpStatusCode statusCode)
         {
             var controller = GetController(DefaultData, SetUpRepository);
@@ -251,6 +263,30 @@ namespace Journals.Web.Tests.Controllers
             items.Should().NotContain(j => j.Id == journal.Id);
         }
 
+        [Theory]
+        [MemberData(nameof(InvalidJournalViewModels))]
+        public void Delete_With_Invalid_Model_Does_Not_Remove_Data(JournalViewModel viewModel, HttpStatusCode statusCode)
+        {
+            int count = int.MinValue;
+            List<Journal> items = null;
+            var controller = GetController(DefaultData,
+                                           (m, r, u) =>
+                                           {
+                                               items = m;
+                                               count = items.Count;
+                                               SetUpRepository(m, r, u);
+                                           });
+
+            controller.ValidateViewModel(viewModel);
+            var result = controller.Delete(viewModel);
+
+            result.Should()
+                  .BeAssignableTo<HttpStatusCodeResult>()
+                  .Which.StatusCode.Should().Be(404);
+
+            items.Should().HaveCount(count);
+        }
+
 
         [Theory]
         [InlineData(1)]
@@ -271,12 +307,7 @@ namespace Journals.Web.Tests.Controllers
 
 
         [Theory]
-        [InlineData(3, HttpStatusCode.NotFound)]
-        [InlineData(4, HttpStatusCode.NotFound)]
-        [InlineData(-1, HttpStatusCode.NotFound)]
-        [InlineData(0, HttpStatusCode.NotFound)]
-        [InlineData(int.MaxValue, HttpStatusCode.NotFound)]
-        [InlineData(int.MinValue, HttpStatusCode.NotFound)]
+        [MemberData(nameof(InvalidIdsAndExpectedStatusCodes))]
         public void Edit_Id_With_Valid_Id_Shows_Error(int id, HttpStatusCode statusCode)
         {
             var controller = GetController(DefaultData, SetUpRepository);
@@ -288,6 +319,96 @@ namespace Journals.Web.Tests.Controllers
                   .Which.StatusCode.Should().Be((int)statusCode);
         }
 
+
+        [Theory]
+        [MemberData(nameof(ValidUpdatedJournals))]
+        public void Edit_With_Valid_Model_Edits_Data(JournalUpdateViewModel viewModel)
+        {
+            int count = int.MinValue;
+            List<Journal> items = null;
+            var controller = GetController(DefaultData,
+                                           (m, r, u) =>
+                                           {
+                                               items = m;
+                                               count = items.Count;
+                                               SetUpRepository(m, r, u);
+                                           }, "POST");
+
+            controller.ValidateViewModel(viewModel);
+            var result = controller.Edit(viewModel);
+
+            items.Should().HaveCount(count, "nothing should be deleted nor inserted in an update operation");
+
+            items.Should().HaveCount(count);
+
+            var edited = items.Find(j => j.Id == viewModel.Id);
+
+            controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid: {0}", controller.ModelState.Dump());
+
+            edited.Should().NotBeNull();
+
+            edited.Id.Should().Be(viewModel.Id, "{0} should be {2}, is {1}", nameof(edited.Id), edited.Id, viewModel.Id);
+            edited.FileName.Should().Be(viewModel.FileName, "{0} should be {2}, is {1}", nameof(edited.FileName), edited.FileName, viewModel.FileName);
+            edited.Content.Should().NotBeNull().And.Match(c => c.SequenceEqual(viewModel.Content));
+            edited.ContentType.Should().Be(viewModel.ContentType, "{0} should be {2}, is {1}", nameof(edited.ContentType), edited.ContentType, viewModel.ContentType);
+
+            edited.Title.Should().Be(viewModel.Title, "{0} should be {2}, is {1}", nameof(edited.Title), edited.Title, viewModel.Title);
+            edited.Description.Should().Be(viewModel.Description, "{0} should be {2}, is {1}", nameof(edited.Description), edited.Description, viewModel.Description);
+            edited.UserId.Should().Be(viewModel.UserId, "{0} should be {2}, is {1}", nameof(edited.UserId), edited.UserId, viewModel.UserId);
+
+
+            result.Should().BeRedirectToRouteResult().WithAction("Index");
+
+
+
+        }
+
+
+
+        [Theory]
+        [MemberData(nameof(InvalidUpdatedJournals))]
+        public void Edit_With_Invalid_Model_Does_Not_Change_Data(JournalUpdateViewModel viewModel, HttpStatusCode expectedStatusCode)
+        {
+            int count = int.MinValue;
+            List<Journal> items = null;
+            var controller = GetController(DefaultData,
+                                           (m, r, u) =>
+                                           {
+                                               items = m;
+                                               count = items.Count;
+                                               SetUpRepository(m, r, u);
+                                           });
+
+            if (expectedStatusCode == HttpStatusCode.OK)
+            {
+
+                var original = items.Find(i => i.Id == viewModel.Id);
+                var originalViewModel = Mapper.Map<Journal, JournalUpdateViewModel>(original);
+
+                controller.ValidateViewModel(viewModel);
+                var result = controller.Edit(viewModel);
+
+                items.Should().HaveCount(count, "nothing should be deleted nor inserted in an update operation");
+
+                var edited = items.Find(j => j.Id == viewModel.Id);
+
+                edited.Id.Should().Be(originalViewModel.Id, "{0} should be {2}, is {1}", nameof(edited.Id), edited.Id, originalViewModel.Id);
+                edited.FileName.Should().Be(originalViewModel.FileName, "{0} should be {2}, is {1}", nameof(edited.FileName), edited.FileName, originalViewModel.FileName);
+                edited.Content.Should().NotBeNull().And.Match(c => c.SequenceEqual(originalViewModel.Content));
+                edited.ContentType.Should().Be(originalViewModel.ContentType, "{0} should be {2}, is {1}", nameof(edited.ContentType), edited.ContentType, originalViewModel.ContentType);
+
+                edited.Title.Should().Be(originalViewModel.Title, "{0} should be {2}, is {1}", nameof(edited.Title), edited.Title, originalViewModel.Title);
+                edited.Description.Should().Be(originalViewModel.Description, "{0} should be {2}, is {1}", nameof(edited.Description), edited.Description, originalViewModel.Description);
+                edited.UserId.Should().Be(originalViewModel.UserId, "{0} should be {2}, is {1}", nameof(edited.UserId), edited.UserId, originalViewModel.UserId);
+
+
+                result.Should().BeViewResult("validation error should appear to the user")
+                      .WithViewName("Edit")
+                      .Model.Should().Be(viewModel);
+
+            }
+
+        }
 
         public void Dispose()
         {

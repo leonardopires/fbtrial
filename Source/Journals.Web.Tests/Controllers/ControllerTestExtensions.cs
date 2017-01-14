@@ -20,5 +20,11 @@ namespace Journals.Web.Tests.Controllers
             }
         }
 
+        public static string Dump(this ModelStateDictionary modelState)
+        {
+            return string.Join("\n\n", modelState.Values.SelectMany(m => m.Errors).Select(e => $"Error: {e.ErrorMessage} - Exception: {e.Exception}"));
+        }
+
+
     }
 }
