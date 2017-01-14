@@ -58,57 +58,9 @@ namespace Journals.Web.Tests.Controllers
 
         protected override void SetUpRepository(List<Journal> models, IJournalRepository modelRepository, MembershipUser userMock)
         {
-
-            modelRepository.Arrange((r) => r.GetAllJournals((int)userMock.ProviderUserKey)).Returns(models);
-
-            foreach (var journal in models)
-            {
-                modelRepository.Arrange((r) => r.GetJournalById(journal.Id)).Returns(journal);
-            }
-
-
-            modelRepository.Arrange((r) => r.GetJournalById(Arg.Matches<int>(i => models.Count(item => item.Id == i) == 0))).Returns((Journal)null);
-
-            modelRepository.Arrange(i => i.AddJournal(Arg.IsAny<Journal>()))
-                                                .Returns(
-                                                    (Journal a) =>
-                                                    {
-                                                        models.Add(a);
-                                                        return new OperationStatus() { Status = a.Id != int.MaxValue };
-                                                    });
-
-
-            modelRepository.Arrange(i => i.DeleteJournal(Arg.IsAny<Journal>()))
-                                                .Returns(
-                                                    (Journal a) =>
-                                                    {
-                                                        var modelToRemove = models.FirstOrDefault(i => i.Id == a.Id);
-                                                        var status = new OperationStatus() {Status = modelToRemove != null && models.Remove(modelToRemove) };
-                                                        return status;
-                                                    });
-
-
-            modelRepository.Arrange(i => i.UpdateJournal(Arg.IsAny<Journal>()))
-                                                            .Returns(
-                                                                (Journal a) =>
-                                                                {
-                                                                    var index = models.FindIndex(i => i.Id == a.Id);
-                                                                    var model = models[index];
-
-                                                                    model.Content = a.Content;
-                                                                    model.ContentType = a.ContentType;
-                                                                    model.FileName = a.FileName;
-                                                                    model.Description = a.Description;
-                                                                    model.ModifiedDate = a.ModifiedDate;
-                                                                    model.Title = a.Title;
-                                                                    model.UserId = a.UserId;
-
-                                                                    models[index] = model;
-
-                                                                    return new OperationStatus() { Status = a.Id != int.MaxValue };
-                                                                });
-
+            Data.SetUpRepository(models, modelRepository, userMock);
         }
+        
 
 
         [Theory]
@@ -347,14 +299,14 @@ namespace Journals.Web.Tests.Controllers
 
             edited.Should().NotBeNull();
 
-            edited.Id.Should().Be(viewModel.Id, "{0} should be {2}, is {1}", nameof(edited.Id), edited.Id, viewModel.Id);
-            edited.FileName.Should().Be(viewModel.FileName, "{0} should be {2}, is {1}", nameof(edited.FileName), edited.FileName, viewModel.FileName);
+            edited.Id.Should().Be(viewModel.Id, EXPECTATION_REALITY, nameof(edited.Id), edited.Id, viewModel.Id);
+            edited.FileName.Should().Be(viewModel.FileName, EXPECTATION_REALITY, nameof(edited.FileName), edited.FileName, viewModel.FileName);
             edited.Content.Should().NotBeNull().And.Match(c => c.SequenceEqual(viewModel.Content));
-            edited.ContentType.Should().Be(viewModel.ContentType, "{0} should be {2}, is {1}", nameof(edited.ContentType), edited.ContentType, viewModel.ContentType);
+            edited.ContentType.Should().Be(viewModel.ContentType, EXPECTATION_REALITY, nameof(edited.ContentType), edited.ContentType, viewModel.ContentType);
 
-            edited.Title.Should().Be(viewModel.Title, "{0} should be {2}, is {1}", nameof(edited.Title), edited.Title, viewModel.Title);
-            edited.Description.Should().Be(viewModel.Description, "{0} should be {2}, is {1}", nameof(edited.Description), edited.Description, viewModel.Description);
-            edited.UserId.Should().Be(viewModel.UserId, "{0} should be {2}, is {1}", nameof(edited.UserId), edited.UserId, viewModel.UserId);
+            edited.Title.Should().Be(viewModel.Title, EXPECTATION_REALITY, nameof(edited.Title), edited.Title, viewModel.Title);
+            edited.Description.Should().Be(viewModel.Description, EXPECTATION_REALITY, nameof(edited.Description), edited.Description, viewModel.Description);
+            edited.UserId.Should().Be(viewModel.UserId, EXPECTATION_REALITY, nameof(edited.UserId), edited.UserId, viewModel.UserId);
 
 
             result.Should().BeRedirectToRouteResult().WithAction("Index");
@@ -379,33 +331,73 @@ namespace Journals.Web.Tests.Controllers
                                                SetUpRepository(m, r, u);
                                            });
 
+            var original = items.Find(i => i.Id == viewModel.Id);
+            var originalViewModel = Mapper.Map<Journal, JournalUpdateViewModel>(original);
+
+            controller.ValidateViewModel(viewModel);
+            var result = controller.Edit(viewModel);
+
             if (expectedStatusCode == HttpStatusCode.OK)
             {
-
-                var original = items.Find(i => i.Id == viewModel.Id);
-                var originalViewModel = Mapper.Map<Journal, JournalUpdateViewModel>(original);
-
-                controller.ValidateViewModel(viewModel);
-                var result = controller.Edit(viewModel);
-
                 items.Should().HaveCount(count, "nothing should be deleted nor inserted in an update operation");
 
                 var edited = items.Find(j => j.Id == viewModel.Id);
 
-                edited.Id.Should().Be(originalViewModel.Id, "{0} should be {2}, is {1}", nameof(edited.Id), edited.Id, originalViewModel.Id);
-                edited.FileName.Should().Be(originalViewModel.FileName, "{0} should be {2}, is {1}", nameof(edited.FileName), edited.FileName, originalViewModel.FileName);
-                edited.Content.Should().NotBeNull().And.Match(c => c.SequenceEqual(originalViewModel.Content));
-                edited.ContentType.Should().Be(originalViewModel.ContentType, "{0} should be {2}, is {1}", nameof(edited.ContentType), edited.ContentType, originalViewModel.ContentType);
+                edited.Id.Should()
+                      .Be(originalViewModel.Id, EXPECTATION_REALITY, nameof(edited.Id), edited.Id, originalViewModel.Id);
 
-                edited.Title.Should().Be(originalViewModel.Title, "{0} should be {2}, is {1}", nameof(edited.Title), edited.Title, originalViewModel.Title);
-                edited.Description.Should().Be(originalViewModel.Description, "{0} should be {2}, is {1}", nameof(edited.Description), edited.Description, originalViewModel.Description);
-                edited.UserId.Should().Be(originalViewModel.UserId, "{0} should be {2}, is {1}", nameof(edited.UserId), edited.UserId, originalViewModel.UserId);
+                edited.FileName.Should()
+                      .Be(
+                          originalViewModel.FileName,
+                          EXPECTATION_REALITY,
+                          nameof(edited.FileName),
+                          edited.FileName,
+                          originalViewModel.FileName);
+
+                edited.Content.Should().NotBeNull().And.Match(c => c.SequenceEqual(originalViewModel.Content));
+
+                edited.ContentType.Should()
+                      .Be(
+                          originalViewModel.ContentType,
+                          EXPECTATION_REALITY,
+                          nameof(edited.ContentType),
+                          edited.ContentType,
+                          originalViewModel.ContentType);
+
+                edited.Title.Should()
+                      .Be(
+                          originalViewModel.Title,
+                          EXPECTATION_REALITY,
+                          nameof(edited.Title),
+                          edited.Title,
+                          originalViewModel.Title);
+                edited.Description.Should()
+                      .Be(
+                          originalViewModel.Description,
+                          EXPECTATION_REALITY,
+                          nameof(edited.Description),
+                          edited.Description,
+                          originalViewModel.Description);
+                edited.UserId.Should()
+                      .Be(
+                          originalViewModel.UserId,
+                          EXPECTATION_REALITY,
+                          nameof(edited.UserId),
+                          edited.UserId,
+                          originalViewModel.UserId);
 
 
                 result.Should().BeViewResult("validation error should appear to the user")
                       .WithViewName("Edit")
                       .Model.Should().Be(viewModel);
 
+            }
+            else
+            {
+                result.Should()
+                      .BeAssignableTo<HttpStatusCodeResult>()
+                      .Which.StatusCode.Should()
+                      .Be((int) expectedStatusCode);
             }
 
         }

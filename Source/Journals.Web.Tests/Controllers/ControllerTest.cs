@@ -24,6 +24,9 @@ namespace Journals.Web.Tests.Controllers
             where TRepository : IDisposable
             where TTestData : class, new()
     {
+        protected const string EXPECTATION_REALITY = "{0} \n\t- Expectation: {2} \n\t- Reality: {1}";
+
+
         private static readonly Lazy<TTestData> _data = new Lazy<TTestData>(() => new TTestData());
 
         public static TTestData Data => _data.Value;

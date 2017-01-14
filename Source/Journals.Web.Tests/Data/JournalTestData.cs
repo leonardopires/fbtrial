@@ -6,8 +6,10 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using System.Web.Security;
 using AutoMapper;
 using Journals.Model;
+using Journals.Repository;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
 
@@ -15,6 +17,65 @@ namespace Journals.Web.Tests.Data
 {
     public class JournalTestData
     {
+
+        public void SetUpRepository(List<Journal> models, IJournalRepository modelRepository, MembershipUser userMock)
+        {
+            modelRepository.Arrange((r) => r.GetAllJournals((int)userMock.ProviderUserKey)).Returns(models);
+
+            foreach (var journal in models)
+            {
+                modelRepository.Arrange((r) => r.GetJournalById(journal.Id)).Returns(journal);
+            }
+
+
+            modelRepository.Arrange((r) => r.GetJournalById(Arg.Matches<int>(i => models.Count(item => item.Id == i) == 0)))
+                           .Returns((Journal)null);
+
+            modelRepository.Arrange(i => i.AddJournal(Arg.IsAny<Journal>()))
+                           .Returns(
+                               (Journal a) =>
+                               {
+                                   models.Add(a);
+                                   return new OperationStatus() { Status = a.Id != int.MaxValue };
+                               });
+
+
+            modelRepository.Arrange(i => i.DeleteJournal(Arg.IsAny<Journal>()))
+                           .Returns(
+                               (Journal a) =>
+                               {
+                                   var modelToRemove = models.FirstOrDefault(i => i.Id == a.Id);
+                                   var status = new OperationStatus()
+                                   {
+                                       Status = modelToRemove != null && models.Remove(modelToRemove)
+                                   };
+                                   return status;
+                               });
+
+
+            modelRepository.Arrange(i => i.UpdateJournal(Arg.IsAny<Journal>()))
+                           .Returns(
+                               (Journal a) =>
+                               {
+                                   var index = models.FindIndex(i => i.Id == a.Id);
+
+                                   if (index >= 0)
+                                   {
+                                       var model = models[index];
+
+                                       model.Content = a.Content;
+                                       model.ContentType = a.ContentType;
+                                       model.FileName = a.FileName;
+                                       model.Description = a.Description;
+                                       model.ModifiedDate = a.ModifiedDate;
+                                       model.Title = a.Title;
+                                       model.UserId = a.UserId;
+
+                                       models[index] = model;
+                                   }
+                                   return new OperationStatus() { Status = index >= 0 };
+                               });
+        }
 
         public List<Journal> GetDefaultData() => new List<Journal>()
         {
@@ -141,7 +202,43 @@ namespace Journals.Web.Tests.Data
                     title: "TesterUpdated1",
                     userId: 2
                 )
-            }
+            },
+            new object[]
+            {
+                CreateJournalUpdateViewModel(
+                    id: 1,
+                    description: "DescriptionUpdated1"
+                )
+            },
+            new object[]
+            {
+                CreateJournalUpdateViewModel(
+                    id: 1,
+                    fileName: "TestFilenameUpdated1.pdf"
+                )
+            },
+            new object[]
+            {
+                CreateJournalUpdateViewModel(
+                    id: 2,
+                    contentType: "application/octet-stream"
+                )
+            },
+            new object[]
+            {
+                CreateJournalUpdateViewModel(
+                    id: 1,
+                    title: "TesterUpdated1"
+                )
+            },
+            new object[]
+            {
+                CreateJournalUpdateViewModel(
+                    id: 1,
+                    userId: 2
+                )
+            },
+
         };
 
 
@@ -174,6 +271,14 @@ namespace Journals.Web.Tests.Data
                     content: new byte[1024 * 1024 * 4]
                 ),
                 HttpStatusCode.OK
+            },
+            
+            new object[]
+            {
+                CreateJournalUpdateViewModel(
+                    id: int.MaxValue
+                ),
+                HttpStatusCode.InternalServerError
             }
         };
 
