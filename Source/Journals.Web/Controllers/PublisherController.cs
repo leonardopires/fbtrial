@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Web.Mvc;
+using Newtonsoft.Json;
 
 namespace Journals.Web.Controllers
 {
@@ -60,8 +61,9 @@ namespace Journals.Web.Controllers
 
                 var opStatus = _journalRepository.AddJournal(newJournal);
                 if (!opStatus.Status)
-                    throw new System.Web.Http.HttpResponseException(new HttpResponseMessage(HttpStatusCode.InternalServerError));
-
+                {
+                    return new HttpStatusCodeResult(HttpStatusCode.InternalServerError, JsonConvert.SerializeObject(opStatus));
+                }
                 return RedirectToAction("Index");
             }
             else
