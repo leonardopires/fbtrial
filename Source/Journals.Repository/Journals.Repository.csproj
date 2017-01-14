@@ -7,8 +7,8 @@
     <ProjectGuid>{DDDD0C77-9174-4B95-91E1-360FDE8DD1D5}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Medico.Repository</RootNamespace>
-    <AssemblyName>Medico.Repository</AssemblyName>
+    <RootNamespace>Journals.Repository</RootNamespace>
+    <AssemblyName>Journals.Repository</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
