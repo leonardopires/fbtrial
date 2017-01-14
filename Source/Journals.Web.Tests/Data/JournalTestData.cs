@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using AutoMapper;
 using Journals.Model;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
@@ -160,6 +161,7 @@ namespace Journals.Web.Tests.Data
                 HttpStatusCode.InternalServerError
             }
         };
+        
 
         private static JournalViewModel CreateJournalViewModel(
             byte[] content,
@@ -191,5 +193,7 @@ namespace Journals.Web.Tests.Data
             return journalViewModel;
         }
 
+
     }
+
 }

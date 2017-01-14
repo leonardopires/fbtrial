@@ -2,15 +2,12 @@
 using Journals.Model;
 using Journals.Repository;
 using Journals.Web.Controllers;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Web;
 using System.Web.Http.Controllers;
 using System.Web.Mvc;
-using System.Web.Routing;
 using System.Web.Security;
 using FluentAssertions;
 using FluentAssertions.Mvc;
@@ -23,10 +20,8 @@ using Xunit;
 
 namespace Journals.Web.Tests.Controllers
 {
-    public class PublisherControllerTest : IDisposable
+    public class PublisherControllerTest : ControllerTest<PublisherController, Journal, IJournalRepository, JournalTestData>
     {
-
-        private static readonly JournalTestData data;
 
         public PublisherControllerTest()
         {
@@ -40,60 +35,50 @@ namespace Journals.Web.Tests.Controllers
             Mapper.CreateMap<SubscriptionViewModel, Journal>();
         }
 
-        static PublisherControllerTest()
+        protected override PublisherController CreateControllerInstance(
+            IJournalRepository repository,
+            IStaticMembershipService membershipService)
         {
-            data = new JournalTestData();
+            return new PublisherController(repository, membershipService);
         }
 
-        private static PublisherController GetController(List<Journal> journals, Action<List<Journal>, IJournalRepository, MembershipUser> setupAction, string httpMethod = "GET")
-        {
-            Mapper.CreateMap<Journal, JournalViewModel>();
 
-            //Arrange
-            var membershipRepository = Mock.Create<IStaticMembershipService>();
-            var userMock = Mock.Create<MembershipUser>();
-            Mock.Arrange(() => userMock.ProviderUserKey).Returns(1);
-            Mock.Arrange(() => membershipRepository.GetUser()).Returns(userMock);
+        public static IEnumerable<object[]> InvalidJournalViewModels => Data.InvalidJournalViewModels;
 
-            var journalRepository = Mock.Create<IJournalRepository>();
+        public static IEnumerable<object[]> ValidJournalViewModelsForCreate => Data.ValidJournalViewModelsForCreate;
 
-            var journalsCopy = new List<Journal>(journals);
+        public static List<Journal> DefaultData => Data.DefaultData;
 
-            setupAction?.Invoke(journalsCopy, journalRepository, userMock);
 
-            //Act
-            PublisherController controller = new PublisherController(journalRepository, membershipRepository);
-
-            var mockHttpContext = Mock.Create<HttpContextBase>();
-            var mockRequest = Mock.Create<HttpRequestBase>();
-
-            Mock.Arrange(() => mockHttpContext.Request).Returns(mockRequest);
-            Mock.Arrange(() => mockRequest.HttpMethod).Returns(httpMethod);
-
-            controller.ControllerContext = new ControllerContext(mockHttpContext, new RouteData(), controller);
-
-            return controller;
-        }
-
-        private static void SetUpRepository(List<Journal> journals, IJournalRepository journalRepository, MembershipUser userMock)
+        protected override void SetUpRepository(List<Journal> models, IJournalRepository modelRepository, MembershipUser userMock)
         {
 
-            journalRepository.Arrange((r) => r.GetAllJournals((int)userMock.ProviderUserKey)).Returns(journals);
+            modelRepository.Arrange((r) => r.GetAllJournals((int)userMock.ProviderUserKey)).Returns(models);
 
-            foreach (var journal in journals)
+            foreach (var journal in models)
             {
-                journalRepository.Arrange((r) => r.GetJournalById(journal.Id)).Returns(journal);
+                modelRepository.Arrange((r) => r.GetJournalById(journal.Id)).Returns(journal);
             }
 
 
-            journalRepository.Arrange((r) => r.GetJournalById(Arg.Matches<int>(i => journals.Count(item => item.Id == i) == 0))).Returns((Journal)null);
+            modelRepository.Arrange((r) => r.GetJournalById(Arg.Matches<int>(i => models.Count(item => item.Id == i) == 0))).Returns((Journal)null);
 
-            journalRepository.Arrange(i => i.AddJournal(Arg.IsAny<Journal>()))
+            modelRepository.Arrange(i => i.AddJournal(Arg.IsAny<Journal>()))
                                                 .Returns(
                                                     (Journal a) =>
                                                     {
-                                                        journals.Add(a);
+                                                        models.Add(a);
                                                         return new OperationStatus() { Status = a.Id != int.MaxValue };
+                                                    });
+
+
+            modelRepository.Arrange(i => i.DeleteJournal(Arg.IsAny<Journal>()))
+                                                .Returns(
+                                                    (Journal a) =>
+                                                    {
+                                                        var modelToRemove = models.FirstOrDefault(i => i.Id == a.Id);
+                                                        var status = new OperationStatus() {Status = modelToRemove != null && models.Remove(modelToRemove) };
+                                                        return status;
                                                     });
 
         }
@@ -105,13 +90,24 @@ namespace Journals.Web.Tests.Controllers
         {
             var controller = GetController(DefaultData, SetUpRepository);
 
-            ViewResult actionResult = (ViewResult)controller.Index();
-            var model = actionResult.Model as IEnumerable<JournalViewModel>;
+            var expected = Mapper.Map<List<Journal>, List<JournalViewModel>>(DefaultData);
 
-            //Assert
-            Assert.NotNull(model);
+            var result = controller.Index();
+            
+            var model = result.Should()
+                  .BeViewResult()
+                  .WithViewName("Index")
+                  .ModelAs<List<JournalViewModel>>();
 
-            Assert.Equal(count, model.Count());
+
+            model.Should()
+                 .NotBeNull()
+                 .And.HaveCount(count);
+
+            foreach (var viewModel in model)
+            {
+                expected.Contains(viewModel).Should().BeTrue("all items in the view model must be equivalent to the items in the expected list");
+            }
         }
 
 
@@ -122,7 +118,7 @@ namespace Journals.Web.Tests.Controllers
 
             var result = controller.Create();
 
-            result.Should().BeViewResult();
+            result.Should().BeViewResult().WithViewName("Create");
         }
 
         [Theory]
@@ -160,7 +156,7 @@ namespace Journals.Web.Tests.Controllers
         [MemberData(nameof(InvalidJournalViewModels))]
         public void Create_Post_With_Invalid_Args_Returns_StatusCode(JournalViewModel journal, HttpStatusCode statusCode)
         {
-            var controller = GetController(DefaultData, SetUpRepository);
+            var controller = GetController(DefaultData, SetUpRepository, "POST");
 
             controller.ValidateViewModel(journal);
             var result = controller.Create(journal);
@@ -175,7 +171,7 @@ namespace Journals.Web.Tests.Controllers
             {
                 controller.ModelState.IsValid.Should().BeFalse("ModelState should be invalid");
                 result.Should().NotBeOfType<HttpStatusCodeResult>("validation errors should be identified by ModelState");
-                result.Should().BeViewResult("validation errors should appear to the user");
+                result.Should().BeViewResult("validation errors should appear to the user").WithViewName("Create");
             }
         }
 
@@ -183,22 +179,115 @@ namespace Journals.Web.Tests.Controllers
         [MemberData(nameof(ValidJournalViewModelsForCreate))]
         public void Create_Post_With_Valid_Args_Redirects_To_Index(JournalViewModel journal)
         {
-            var controller = GetController(DefaultData, SetUpRepository);
+            var controller = GetController(DefaultData, SetUpRepository, "POST");
 
             controller.ValidateViewModel(journal);
-
             var result = controller.Create(journal);
 
             controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid");
-
             result.Should().BeRedirectToRouteResult().WithAction("Index");
         }
 
-        public static IEnumerable<object[]> InvalidJournalViewModels => data.InvalidJournalViewModels;
 
-        public static IEnumerable<object[]> ValidJournalViewModelsForCreate => data.ValidJournalViewModelsForCreate;
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        public void Delete_Id_With_Valid_Id_Shows_Confirmation_Page(int id)
+        {
+            var controller = GetController(DefaultData, SetUpRepository);
 
-        public static List<Journal> DefaultData => data.DefaultData;
+            var result = controller.Delete(id);
+
+            result.Should()
+                    .BeViewResult("the confirmation page should appear")
+                    .WithViewName("Delete")
+                    .Model.Should()
+                    .NotBeNull()
+                    .And.BeAssignableTo<JournalViewModel>();
+        }
+
+        [Theory]
+        [InlineData(3, HttpStatusCode.NotFound)]
+        [InlineData(4, HttpStatusCode.NotFound)]
+        [InlineData(-1, HttpStatusCode.NotFound)]
+        [InlineData(0, HttpStatusCode.NotFound)]
+        [InlineData(int.MaxValue, HttpStatusCode.NotFound)]
+        [InlineData(int.MinValue, HttpStatusCode.NotFound)]
+        public void Delete_Id_With_Valid_Id_Shows_Error(int id, HttpStatusCode statusCode)
+        {
+            var controller = GetController(DefaultData, SetUpRepository);
+
+            var result = controller.Delete(id);
+
+            result.Should()
+                  .BeAssignableTo<HttpStatusCodeResult>()
+                  .Which.StatusCode.Should().Be((int)statusCode);
+        }
+
+        [Theory]
+        [InlineData(2)]
+        [InlineData(1)]
+        public void Delete_With_Valid_Model_Removes_Data(int id)
+        {
+            int count = int.MinValue;
+            List<Journal> items = null;
+            var controller = GetController(DefaultData,
+                                           (m, r, u) =>
+                                           {
+                                               items = m;
+                                               count = items.Count;
+                                               SetUpRepository(m, r, u);
+                                           });
+
+            var journal = items.FirstOrDefault(i => i.Id == id);
+
+            var viewModel = Mapper.Map<Journal, JournalViewModel>(journal);
+
+            var result = controller.Delete(viewModel);
+
+            result.Should().BeRedirectToRouteResult().WithAction("Index");
+
+            items.Should().HaveCount(c => c < count);
+            items.Should().NotContain(j => j.Id == journal.Id);
+        }
+
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        public void Edit_Id_With_Valid_Id_Shows_Edit_Page(int id)
+        {
+            var controller = GetController(DefaultData, SetUpRepository);
+
+            var result = controller.Edit(id);
+
+            result.Should()
+                    .BeViewResult("the edit page should appear")
+                    .WithViewName("Edit")
+                    .Model.Should()
+                    .NotBeNull()
+                    .And.BeAssignableTo<JournalUpdateViewModel>();
+        }
+
+
+        [Theory]
+        [InlineData(3, HttpStatusCode.NotFound)]
+        [InlineData(4, HttpStatusCode.NotFound)]
+        [InlineData(-1, HttpStatusCode.NotFound)]
+        [InlineData(0, HttpStatusCode.NotFound)]
+        [InlineData(int.MaxValue, HttpStatusCode.NotFound)]
+        [InlineData(int.MinValue, HttpStatusCode.NotFound)]
+        public void Edit_Id_With_Valid_Id_Shows_Error(int id, HttpStatusCode statusCode)
+        {
+            var controller = GetController(DefaultData, SetUpRepository);
+
+            var result = controller.Edit(id);
+
+            result.Should()
+                  .BeAssignableTo<HttpStatusCodeResult>()
+                  .Which.StatusCode.Should().Be((int)statusCode);
+        }
+
 
         public void Dispose()
         {

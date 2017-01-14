@@ -29,12 +29,12 @@ namespace Journals.Web.Controllers
 
             List<Journal> allJournals = _journalRepository.GetAllJournals(userId);
             var journals = Mapper.Map<List<Journal>, List<JournalViewModel>>(allJournals);
-            return View(journals);
+            return View(nameof(Index), journals);
         }
 
         public ActionResult Create()
         {
-            return View();
+            return View(nameof(Create));
         }
 
         public ActionResult GetFile(int Id)
@@ -64,17 +64,29 @@ namespace Journals.Web.Controllers
                 {
                     return new HttpStatusCodeResult(HttpStatusCode.InternalServerError);
                 }
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
             }
             else
-                return View(journal);
+                return View(nameof(Create), journal);
         }
 
         public ActionResult Delete(int Id)
         {
+            ActionResult result;
             var selectedJournal = _journalRepository.GetJournalById(Id);
-            var journal = Mapper.Map<Journal, JournalViewModel>(selectedJournal);
-            return View(journal);
+
+            if (selectedJournal != null)
+            {
+
+                var journal = Mapper.Map<Journal, JournalViewModel>(selectedJournal);
+
+                result = View(nameof(Delete), journal);
+            }
+            else
+            {
+                result = HttpNotFound();
+            }
+            return result;
         }
 
         [HttpPost]
@@ -87,16 +99,26 @@ namespace Journals.Web.Controllers
             if (!opStatus.Status)
                 throw new System.Web.Http.HttpResponseException(new HttpResponseMessage(HttpStatusCode.NotFound));
 
-            return RedirectToAction("Index");
+            return RedirectToAction(nameof(Index));
         }
 
         public ActionResult Edit(int Id)
         {
-            var journal = _journalRepository.GetJournalById(Id);
+            ActionResult result;
 
-            var selectedJournal = Mapper.Map<Journal, JournalUpdateViewModel>(journal);
+            var selectedJournal = _journalRepository.GetJournalById(Id);
 
-            return View(selectedJournal);
+
+            if (selectedJournal != null)
+            {
+                var journal = Mapper.Map<Journal, JournalUpdateViewModel>(selectedJournal);
+                result = View(nameof(Edit), journal);
+            }
+            else
+            {
+                result = HttpNotFound();
+            }
+            return result;
         }
 
         [HttpPost]
@@ -112,10 +134,10 @@ namespace Journals.Web.Controllers
                 if (!opStatus.Status)
                     throw new System.Web.Http.HttpResponseException(new HttpResponseMessage(HttpStatusCode.NotFound));
 
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
             }
             else
-                return View(journal);
+                return View(nameof(Edit), journal);
         }
 
         protected override void OnException(ExceptionContext filterContext)
