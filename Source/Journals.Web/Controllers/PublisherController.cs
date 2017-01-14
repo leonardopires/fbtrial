@@ -62,7 +62,7 @@ namespace Journals.Web.Controllers
                 var opStatus = _journalRepository.AddJournal(newJournal);
                 if (!opStatus.Status)
                 {
-                    return new HttpStatusCodeResult(HttpStatusCode.InternalServerError, JsonConvert.SerializeObject(opStatus));
+                    return new HttpStatusCodeResult(HttpStatusCode.InternalServerError);
                 }
                 return RedirectToAction("Index");
             }

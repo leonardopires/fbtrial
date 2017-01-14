@@ -14,6 +14,7 @@ using System.Web.Routing;
 using System.Web.Security;
 using FluentAssertions;
 using FluentAssertions.Mvc;
+using Journals.Web.Tests.Data;
 using Microsoft.Data.OData.Query.SemanticAst;
 using Newtonsoft.Json;
 using Telerik.JustMock;
@@ -22,35 +23,10 @@ using Xunit;
 
 namespace Journals.Web.Tests.Controllers
 {
-    public class PublisherControllerTest
+    public class PublisherControllerTest : IDisposable
     {
 
-        private static List<Journal> _defaultJournals = new List<Journal>()
-            {
-                new Journal
-                {
-                    Id = 1,
-                    Description = "TestDesc",
-                    FileName = "TestFilename.pdf",
-                    ContentType = "application/pdf",
-                    Content = new byte[0],
-                    Title = "Tester",
-                    UserId = 1,
-                    ModifiedDate = DateTime.Now
-                },
-                new Journal
-                {
-                    Id = 2,
-                    Description = "TestDesc2",
-                    FileName = "TestFilename2.pdf",
-                    ContentType = "application/pdf",
-                    Content = new byte[0],
-                    Title = "Tester2",
-                    UserId = 1,
-                    ModifiedDate = DateTime.Now
-                }
-            };
-
+        private static readonly JournalTestData data;
 
         public PublisherControllerTest()
         {
@@ -62,6 +38,11 @@ namespace Journals.Web.Tests.Controllers
 
             Mapper.CreateMap<Journal, SubscriptionViewModel>();
             Mapper.CreateMap<SubscriptionViewModel, Journal>();
+        }
+
+        static PublisherControllerTest()
+        {
+            data = new JournalTestData();
         }
 
         private static PublisherController GetController(List<Journal> journals, Action<List<Journal>, IJournalRepository, MembershipUser> setupAction, string httpMethod = "GET")
@@ -96,16 +77,24 @@ namespace Journals.Web.Tests.Controllers
 
         private static void SetUpRepository(List<Journal> journals, IJournalRepository journalRepository, MembershipUser userMock)
         {
-            Mock.Arrange(() => journalRepository.GetAllJournals((int)userMock.ProviderUserKey)).Returns(
-                    journals);
+
+            journalRepository.Arrange((r) => r.GetAllJournals((int)userMock.ProviderUserKey)).Returns(journals);
 
             foreach (var journal in journals)
             {
-                Mock.Arrange(() => journalRepository.GetJournalById(journal.Id)).Returns(journal);
+                journalRepository.Arrange((r) => r.GetJournalById(journal.Id)).Returns(journal);
             }
 
 
-            Mock.Arrange(() => journalRepository.GetJournalById(Arg.Matches<int>(i => journals.Count(item => item.Id == i) == 0))).Returns((Journal)null);            
+            journalRepository.Arrange((r) => r.GetJournalById(Arg.Matches<int>(i => journals.Count(item => item.Id == i) == 0))).Returns((Journal)null);
+
+            journalRepository.Arrange(i => i.AddJournal(Arg.IsAny<Journal>()))
+                                                .Returns(
+                                                    (Journal a) =>
+                                                    {
+                                                        journals.Add(a);
+                                                        return new OperationStatus() { Status = a.Id != int.MaxValue };
+                                                    });
 
         }
 
@@ -114,7 +103,7 @@ namespace Journals.Web.Tests.Controllers
         [InlineData(2)]
         public void Index_Returns_All_Journals(int count)
         {
-            var controller = GetController(_defaultJournals, SetUpRepository);
+            var controller = GetController(DefaultData, SetUpRepository);
 
             ViewResult actionResult = (ViewResult)controller.Index();
             var model = actionResult.Model as IEnumerable<JournalViewModel>;
@@ -129,7 +118,7 @@ namespace Journals.Web.Tests.Controllers
         [Fact]
         public void Create_Returns_View_On_Get()
         {
-            var controller = GetController(_defaultJournals, SetUpRepository);
+            var controller = GetController(DefaultData, SetUpRepository);
 
             var result = controller.Create();
 
@@ -141,37 +130,37 @@ namespace Journals.Web.Tests.Controllers
         [InlineData(2, "application/pdf")]
         public void GetFile_Returns_File(int fileId, string expectedContentType)
         {
-            var controller = GetController(_defaultJournals, SetUpRepository);
+            var controller = GetController(DefaultData, SetUpRepository);
             var result = controller.GetFile(fileId);
 
             result.Should().BeOfType<FileContentResult>().Which.ContentType.Should().Be(expectedContentType);
         }
 
         [Theory]
-        [InlineData(-1, 404)]
-        [InlineData(3, 404)]
-        [InlineData(4, 404)]
-        [InlineData(5, 404)]
-        [InlineData(6, 404)]
-        [InlineData(565, 404)]
-        [InlineData(int.MaxValue, 404)]
-        [InlineData(int.MinValue, 404)]
-        [InlineData(-55, 404)]
-        [InlineData(0, 404)]
-        [InlineData(32, 404)]
-        public void GetFile_Returns_StatusCode_OnErrors(int fileId, int httpStatus)
+        [InlineData(-1, HttpStatusCode.NotFound)]
+        [InlineData(3, HttpStatusCode.NotFound)]
+        [InlineData(4, HttpStatusCode.NotFound)]
+        [InlineData(5, HttpStatusCode.NotFound)]
+        [InlineData(6, HttpStatusCode.NotFound)]
+        [InlineData(565, HttpStatusCode.NotFound)]
+        [InlineData(int.MaxValue, HttpStatusCode.NotFound)]
+        [InlineData(int.MinValue, HttpStatusCode.NotFound)]
+        [InlineData(-55, HttpStatusCode.NotFound)]
+        [InlineData(0, HttpStatusCode.NotFound)]
+        [InlineData(32, HttpStatusCode.NotFound)]
+        public void GetFile_Returns_StatusCode_OnErrors(int fileId, HttpStatusCode httpStatus)
         {
-            var controller = GetController(_defaultJournals, SetUpRepository);
+            var controller = GetController(DefaultData, SetUpRepository);
             var result = controller.GetFile(fileId);
 
-            result.Should().BeAssignableTo<HttpStatusCodeResult>().Which.StatusCode.Should().Be(httpStatus);
+            result.Should().BeAssignableTo<HttpStatusCodeResult>().Which.StatusCode.Should().Be((int)httpStatus);
         }
 
         [Theory]
         [MemberData(nameof(InvalidJournalViewModels))]
         public void Create_Post_With_Invalid_Args_Returns_StatusCode(JournalViewModel journal, HttpStatusCode statusCode)
         {
-            var controller = GetController(_defaultJournals, SetUpRepository);
+            var controller = GetController(DefaultData, SetUpRepository);
 
             controller.ValidateViewModel(journal);
             var result = controller.Create(journal);
@@ -194,170 +183,26 @@ namespace Journals.Web.Tests.Controllers
         [MemberData(nameof(ValidJournalViewModelsForCreate))]
         public void Create_Post_With_Valid_Args_Redirects_To_Index(JournalViewModel journal)
         {
-            List<Journal> journals = null;
-            int count = int.MinValue;
-
-            var controller = GetController(_defaultJournals,
-                                           (j, r, u) =>
-                                           {
-                                               SetUpRepository(j, r, u);
-                                               r.Arrange(i => i.AddJournal(Arg.IsAny<Journal>()))
-                                                .Returns(
-                                                    (Journal a) =>
-                                                    {
-                                                        j.Add(a);                                                        
-                                                        return new OperationStatus() {Status = true};
-                                                    }).MustBeCalled();
-
-                                               journals = j;
-                                               count = journals.Count;
-                                           });
+            var controller = GetController(DefaultData, SetUpRepository);
 
             controller.ValidateViewModel(journal);
 
             var result = controller.Create(journal);
 
+            controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid");
+
             result.Should().BeRedirectToRouteResult().WithAction("Index");
-
-            journals.Should().HaveCount(count + 1);
-
         }
 
-        public static IEnumerable<object[]> InvalidJournalViewModels
+        public static IEnumerable<object[]> InvalidJournalViewModels => data.InvalidJournalViewModels;
+
+        public static IEnumerable<object[]> ValidJournalViewModelsForCreate => data.ValidJournalViewModelsForCreate;
+
+        public static List<Journal> DefaultData => data.DefaultData;
+
+        public void Dispose()
         {
-            get
-            {
-                yield return new object[] { new JournalViewModel(), HttpStatusCode.OK };
-
-                yield return new object[] {
-                    CreateJournalViewModel(
-                        content: new byte[1],
-                        id: 3,
-                        description: "TestDesc3",
-                        fileName: "TestFilename3.pdf",
-                        contentType: "application/pdf",
-                        title: "",
-                        userId: 1
-                       
-                        ), HttpStatusCode.OK
-                };
-
-                yield return new object[] {
-                    CreateJournalViewModel(
-                        content: new byte[1],
-                        id: 4,
-                        description: "TestDesc4",
-                        fileName: "",
-                        contentType: "application/pdf",
-                        title: "Tester4",
-                        userId: 1
-
-                        ), HttpStatusCode.OK
-                };
-
-                yield return new object[] {
-                    CreateJournalViewModel(
-                        content: new byte[1],
-                        id: 5,
-                        description: "TestDesc5",
-                        fileName: "TestFilename5.pdf",
-                        contentType: "",
-                        title: "Tester5",
-                        userId: 1
-
-                        ), HttpStatusCode.OK
-                };
-
-
-                yield return new object[] {
-                    CreateJournalViewModel(
-                        content: new byte[1],
-                        id: 6,
-                        description: "",
-                        fileName: "TestFilename6.pdf",
-                        contentType: "application/pdf",
-                        title: "Tester6",
-                        userId: 1
-
-                        ), HttpStatusCode.OK
-                };
-
-
-                yield return new object[] {
-                    CreateJournalViewModel(
-                        content: new byte[1],
-                        id: 7,
-                        description: "Description7",
-                        fileName: "TestFilename7.jpg",
-                        contentType: "application/pdf",
-                        title: "Testert",
-                        userId: 1
-
-                        ), HttpStatusCode.OK
-                };
-
-            }
-        }
-
-        public static IEnumerable<object[]> ValidJournalViewModelsForCreate
-        {
-            get
-            {
-
-                yield return new object[] {
-                    CreateJournalViewModel(
-                        content: new byte[0],
-                        id: 3,
-                        description: "TestDesc3",
-                        fileName: "TestFilename3.pdf",
-                        contentType: "application/pdf",
-                        title: "Tester3",
-                        userId: 1
-                        )
-                };
-
-                yield return new object[] {
-                    CreateJournalViewModel(
-                        content: new byte[0],
-                        id: 4,
-                        description: "TestDesc4",
-                        fileName: "TestFilename4.pdf",
-                        contentType: "application/pdf",
-                        title: "Tester4",
-                        userId: 1
-                        )
-                };
-            }
-        }
-
-        private static JournalViewModel CreateJournalViewModel(
-            byte[] content,
-            int id,
-            string description,
-            string fileName,
-            string contentType,
-            string title,
-            int userId)
-        {
-            var file = Mock.Create<HttpPostedFileBase>();
-
-            file.Arrange((f) => f.InputStream).Returns(new MemoryStream(content));
-            file.Arrange((f) => f.FileName).Returns(fileName);
-            file.Arrange((f) => f.ContentType).Returns(contentType);
-            file.Arrange((f) => f.ContentLength).Returns(content.Length);
-
-            var journalViewModel = new JournalViewModel()
-            {
-                Id = id,
-                Description = description,
-                FileName = fileName,
-                ContentType = contentType,
-                Content = content,
-                Title = title,
-                UserId = userId,
-                File = file
-            };
-            return journalViewModel;
+            Mapper.Reset();
         }
 
     }
