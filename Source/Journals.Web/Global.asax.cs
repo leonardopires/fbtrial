@@ -36,14 +36,17 @@ namespace Journals.Web
             var mappingContainer = IoCMappingContainer.GetInstance();
             DependencyResolver.SetResolver(new IoCScopeContainer(mappingContainer));
 
-            Mapper.CreateMap<Journal, JournalViewModel>();
-            Mapper.CreateMap<JournalViewModel, Journal>();
+            Mapper.Initialize(
+                c =>
+                {
+                    c.CreateMap<Journal, JournalViewModel>();
+                    c.CreateMap<JournalViewModel, Journal>();
+                    c.CreateMap<Journal, JournalUpdateViewModel>();
+                    c.CreateMap<JournalUpdateViewModel, Journal>();
+                    c.CreateMap<Journal, SubscriptionViewModel>();
+                    c.CreateMap<SubscriptionViewModel, Journal>();
 
-            Mapper.CreateMap<Journal, JournalUpdateViewModel>();
-            Mapper.CreateMap<JournalUpdateViewModel, Journal>();
-
-            Mapper.CreateMap<Journal, SubscriptionViewModel>();
-            Mapper.CreateMap<SubscriptionViewModel, Journal>();
+                });
 
             LazyInitializer.EnsureInitialized(ref _initializer, ref _isInitialized, ref _initializerLock);
         }

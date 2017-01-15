@@ -1,63 +1,92 @@
-﻿using AutoMapper;
-using Journals.Model;
-using Journals.Repository;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Web.Mvc;
-using System.Web.Security;
+using AutoMapper;
+using Journals.Model;
+using Journals.Repository;
 
 namespace Journals.Web.Controllers
 {
     [Authorize]
     public class SubscriberController : Controller
     {
-        private IJournalRepository _journalRepository;
-        private ISubscriptionRepository _subscriptionRepository;
 
-        public SubscriberController(IJournalRepository journalRepo, ISubscriptionRepository subscriptionRepo)
+        private readonly IStaticMembershipService membership;
+        private IJournalRepository _journalRepository;
+        private readonly ISubscriptionRepository _subscriptionRepository;
+
+        public SubscriberController(
+            IJournalRepository journalRepo,
+            ISubscriptionRepository subscriptionRepo,
+            IStaticMembershipService membership)
         {
             _journalRepository = journalRepo;
             _subscriptionRepository = subscriptionRepo;
+            this.membership = membership;
         }
 
         public ActionResult Index()
         {
+            ActionResult result;
             var journals = _subscriptionRepository.GetAllJournals();
 
-            if (journals == null)
-                return View();
-
-            var userId = (int)Membership.GetUser().ProviderUserKey;
-            var subscriptions = _subscriptionRepository.GetJournalsForSubscriber(userId);
-
-            var subscriberModel = Mapper.Map<List<Journal>, List<SubscriptionViewModel>>(journals);
-            foreach (var journal in subscriberModel)
+            if (journals != null)
             {
-                if (subscriptions.Any(k => k.JournalId == journal.Id))
-                    journal.IsSubscribed = true;
+                var userId = GetUserId();
+                var subscriptions = _subscriptionRepository.GetJournalsForSubscriber(userId);
+
+                var subscriberModel = Mapper.Map<List<Journal>, List<SubscriptionViewModel>>(journals);
+
+                foreach (var journal in subscriberModel)
+                {
+                    if (subscriptions.Any(k => k.JournalId == journal.Id))
+                    {
+                        journal.IsSubscribed = true;
+                    }
+                }
+
+                result = View(subscriberModel);
             }
 
-            return View(subscriberModel);
+            else
+            {
+                result = View(new List<SubscriptionViewModel>());
+            }
+            return result;
+        }
+
+        private int GetUserId()
+        {
+            return (int) (membership?.GetUser()?.ProviderUserKey ?? -1);
         }
 
         public ActionResult Subscribe(int Id)
         {
-            var opStatus = _subscriptionRepository.AddSubscription(Id, (int)Membership.GetUser().ProviderUserKey);
-            if (!opStatus.Status)
-                throw new System.Web.Http.HttpResponseException(new HttpResponseMessage(HttpStatusCode.NotFound));
-
-            return RedirectToAction("Index");
+            return RedirectOnSuccess(() => _subscriptionRepository.AddSubscription(Id, GetUserId()));
         }
 
         public ActionResult UnSubscribe(int Id)
         {
-            var opStatus = _subscriptionRepository.UnSubscribe(Id, (int)Membership.GetUser().ProviderUserKey);
-            if (!opStatus.Status)
-                throw new System.Web.Http.HttpResponseException(new HttpResponseMessage(HttpStatusCode.NotFound));
-
-            return RedirectToAction("Index");
+            return RedirectOnSuccess(() => _subscriptionRepository.UnSubscribe(Id, GetUserId()));
         }
+
+        protected ActionResult RedirectOnSuccess(Func<OperationStatus> operation, string actionName = "Index")
+        {
+            ActionResult result;
+
+            var opStatus = operation?.Invoke();
+
+            if (!opStatus.Status)
+            {
+                result = HttpNotFound();
+            }
+            else
+            {
+                result = RedirectToAction(actionName);
+            }
+            return result;
+        }
+
     }
 }

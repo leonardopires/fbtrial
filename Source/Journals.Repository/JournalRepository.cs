@@ -10,6 +10,11 @@ namespace Journals.Repository
 {
     public class JournalRepository : RepositoryBase<JournalsContext>, IJournalRepository
     {
+
+        public JournalRepository(Func<JournalsContext> contextFactory) : base(contextFactory)
+        {
+        }
+
         public List<Journal> GetAllJournals(int userId)
         {
             using (DataContext)

@@ -1,14 +1,22 @@
-﻿using System.Web.Mvc;
+﻿using System;
+using System.Web.Mvc;
+using Autofac;
 using FluentAssertions;
 using FluentAssertions.Mvc;
 using Journals.Web.Controllers;
 using Journals.Web.Tests.TestData;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Journals.Web.Tests.Controllers
 {
     public class HomeControllerTest : MvcControllerTest<HomeController, object, StaticPagesTestData>
     {
+
+        public HomeControllerTest(ITestOutputHelper output) : base(output)
+        {
+        }
+
         /// <summary>
         /// Tests opening simple pages from the <see cref="HomeController"/>.
         /// </summary>

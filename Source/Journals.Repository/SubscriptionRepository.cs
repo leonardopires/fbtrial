@@ -8,6 +8,11 @@ namespace Journals.Repository
 {
     public class SubscriptionRepository : RepositoryBase<JournalsContext>, ISubscriptionRepository
     {
+
+        public SubscriptionRepository(Func<JournalsContext> contextFactory) : base(contextFactory)
+        {
+        }
+
         public List<Journal> GetAllJournals()
         {
             try

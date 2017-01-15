@@ -1,22 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
+using Autofac;
+using Autofac.Core;
+using Autofac.Integration.Mvc;
 using FluentAssertions.Common;
 using Telerik.JustMock;
+using Telerik.JustMock.Helpers;
+using Xunit.Abstractions;
 
 namespace Journals.Web.Tests.Controllers
 {
-
-
     /// <summary>
     /// Implements the base functionality for a test that exercises an ASP.NET MVC controller
     /// </summary>
     /// <typeparam name="TController">The type of the controller to be tested.</typeparam>
-    public abstract class MvcControllerTest<TController> : IDisposable
+    public abstract class MvcControllerTest<TController> : TestBase
         where TController : Controller
     {
+
+        protected MvcControllerTest(ITestOutputHelper output) : base(output)
+        {
+        }
 
         /// <summary>
         /// Gets the controller instance for this test.
@@ -25,42 +33,44 @@ namespace Journals.Web.Tests.Controllers
         /// <returns><see cref="TController"/></returns>
         protected virtual TController GetController(string httpMethod = "GET")
         {
-            var controller = CreateControllerInstance();
-            var mockHttpContext = Mock.Create<HttpContextBase>();
-            var mockRequest = Mock.Create<HttpRequestBase>();
+            var controller = Container.Resolve<TController>();
 
-            Mock.Arrange(() => mockHttpContext.Request).Returns(mockRequest);
-            Mock.Arrange(() => mockRequest.HttpMethod).Returns(httpMethod);
+            controller.ControllerContext = new ControllerContext(Container.Resolve<HttpContextBase>(new NamedParameter("httpMethod", httpMethod)), new RouteData(), controller);
 
-            controller.ControllerContext = new ControllerContext(mockHttpContext, new RouteData(), controller);
+            var resolver = new AutofacDependencyResolver(Container.BeginLifetimeScope());
+            DependencyResolver.SetResolver(resolver);
 
             return controller;
         }
 
         /// <summary>
-        /// Creates the controller instance to be used by the test.
+        /// Initializes the container.
         /// </summary>
-        /// <returns><see cref="TController" /></returns>
-        protected virtual TController CreateControllerInstance()
+        /// <param name="builder">The builder.</param>
+        protected override void InitializeContainer(ContainerBuilder builder)
         {
-            return Activator.CreateInstance<TController>();
-        }
+            builder.Register(
+                       (c, p) =>
+                       {
+                           var mock = Mock.Create<HttpRequestBase>();
+                           mock.Arrange(r => r.HttpMethod).Returns(p.Named<string>("httpMethod"));
+                           return mock;
+                       }).As<HttpRequestBase>();
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            builder.Register(
+                       (c, p) =>
+                       {
+                           var mock = Mock.Create<HttpContextBase>();
+                           mock.Arrange(i => i.Request)
+                               .Returns(
+                                   c.Resolve<HttpRequestBase>(
+                                       new NamedParameter("httpMethod", p.Named<string>("httpMethod"))));
+                           return mock;
+                       })
+                .As<HttpContextBase>();                    
+               
 
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
-        /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool disposing)
-        {
+            builder.RegisterType<TController>();
         }
 
     }
@@ -77,6 +87,10 @@ namespace Journals.Web.Tests.Controllers
         where TModel : class, new()
     {
 
+        protected MvcControllerTest(ITestOutputHelper output) : base(output)
+        {
+        }
+
     }
 
     /// <summary>
@@ -89,9 +103,14 @@ namespace Journals.Web.Tests.Controllers
     public abstract class MvcControllerTest<TController, TModel, TTestData> : MvcControllerTest<TController, TModel>
         where TController : Controller
         where TModel : class, new()
-        where TTestData : class, new()
-    {
-        private static readonly Lazy<TTestData> _data = new Lazy<TTestData>(() => new TTestData());
+        where TTestData : class
+    {        
+
+        private static readonly Lazy<TTestData> _data = new Lazy<TTestData>(() => RootContainer.Resolve<TTestData>());
+
+        protected MvcControllerTest(ITestOutputHelper output) : base(output)
+        {
+        }
 
         public static TTestData Data => _data.Value;
 
@@ -100,7 +119,7 @@ namespace Journals.Web.Tests.Controllers
         /// </summary>
         /// <param name="memberName">Name of the member that contains the value be retrieved.</param>
         /// <returns>
-        ///   <see cref="System.Collections.Generic.IEnumerable&lt;System.Object[]&gt;" />
+        ///   <see cref="object" />
         /// </returns>
         public static IEnumerable<object[]> GetDataMember(string memberName)
         {
@@ -125,6 +144,8 @@ namespace Journals.Web.Tests.Controllers
             }
             return result;
         }
+
+ 
 
     }
 }

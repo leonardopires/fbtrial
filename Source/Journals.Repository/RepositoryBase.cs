@@ -8,7 +8,15 @@ namespace Journals.Repository
 {
     public class RepositoryBase<T> : IDisposable where T : DbContext, IDisposedTracker, new()
     {
+
+        private readonly Func<T> contextFactory;
+
         private T _DataContext;
+
+        public RepositoryBase(Func<T> contextFactory)
+        {
+            this.contextFactory = contextFactory;
+        }
 
         public virtual T DataContext
         {
@@ -16,7 +24,7 @@ namespace Journals.Repository
             {
                 if (_DataContext == null || _DataContext.IsDisposed)
                 {
-                    _DataContext = new T();
+                    _DataContext = contextFactory();
 
                     AllowSerialization = true;
                 }

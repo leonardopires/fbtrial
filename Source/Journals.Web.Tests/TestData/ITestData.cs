@@ -8,12 +8,4 @@ namespace Journals.Web.Tests.TestData
         List<TModel> GetDefaultData();
     }
 
-    public interface ITestData<TModel, TRepository> : ITestData<TModel>
-    {
-        void SetUpRepository(List<TModel> models, TRepository modelRepository);
-
-        TRepository CreateRepository();
-
-    }
-
 }

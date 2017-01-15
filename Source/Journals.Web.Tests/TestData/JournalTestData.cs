@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 using System.Web.Security;
-using AutoMapper;
 using Journals.Model;
 using Journals.Repository;
 using Telerik.JustMock;
@@ -15,78 +11,14 @@ using Telerik.JustMock.Helpers;
 
 namespace Journals.Web.Tests.TestData
 {
-    public class JournalTestData : RepositoryTestData<Journal, IJournalRepository>
+    public class JournalTestData : TestData<Journal>
     {
 
-        public override void SetUpRepository(List<Journal> models, IJournalRepository modelRepository)
-        {
-            var membershipRepository = Mock.Create<IStaticMembershipService>();
-            var userMock = Mock.Create<MembershipUser>();
-
-            userMock.Arrange(u => u.ProviderUserKey).Returns(1);
-            membershipRepository.Arrange(m => m.GetUser()).Returns(userMock);
-        
-            modelRepository.Arrange((r) => r.GetAllJournals((int)userMock.ProviderUserKey)).Returns(models);
-
-            foreach (var journal in models)
-            {
-                modelRepository.Arrange((r) => r.GetJournalById(journal.Id)).Returns(journal);
-            }
-
-
-            modelRepository.Arrange((r) => r.GetJournalById(Arg.Matches<int>(i => models.Count(item => item.Id == i) == 0)))
-                           .Returns((Journal)null);
-
-            modelRepository.Arrange(i => i.AddJournal(Arg.IsAny<Journal>()))
-                           .Returns(
-                               (Journal a) =>
-                               {
-                                   models.Add(a);
-                                   return new OperationStatus() { Status = a.Id != int.MaxValue };
-                               });
-
-
-            modelRepository.Arrange(i => i.DeleteJournal(Arg.IsAny<Journal>()))
-                           .Returns(
-                               (Journal a) =>
-                               {
-                                   var modelToRemove = models.FirstOrDefault(i => i.Id == a.Id);
-                                   var status = new OperationStatus()
-                                   {
-                                       Status = modelToRemove != null && models.Remove(modelToRemove)
-                                   };
-                                   return status;
-                               });
-
-
-            modelRepository.Arrange(i => i.UpdateJournal(Arg.IsAny<Journal>()))
-                           .Returns(
-                               (Journal a) =>
-                               {
-                                   var index = models.FindIndex(i => i.Id == a.Id);
-
-                                   if (index >= 0)
-                                   {
-                                       var model = models[index];
-
-                                       model.Content = a.Content;
-                                       model.ContentType = a.ContentType;
-                                       model.FileName = a.FileName;
-                                       model.Description = a.Description;
-                                       model.ModifiedDate = a.ModifiedDate;
-                                       model.Title = a.Title;
-                                       model.UserId = a.UserId;
-
-                                       models[index] = model;
-                                   }
-                                   return new OperationStatus() { Status = index >= 0 };
-                               });
-        }
-
-        public override List<Journal> GetDefaultData() => new List<Journal>()
+        public override List<Journal> GetDefaultData() => new List<Journal>
         {
             CreateJournal(),
-            CreateJournal(id: 2)
+            CreateJournal(2),
+            CreateJournal(3, userId: 2)
         };
 
 
@@ -125,7 +57,7 @@ namespace Journals.Web.Tests.TestData
             new object[]
             {
                 CreateJournalViewModel(
-                    id: 3,
+                    30,
                     title: string.Empty
                 ),
                 HttpStatusCode.OK
@@ -133,7 +65,7 @@ namespace Journals.Web.Tests.TestData
             new object[]
             {
                 CreateJournalViewModel(
-                    id: 4,
+                    4,
                     fileName: string.Empty
                 ),
                 HttpStatusCode.OK
@@ -141,7 +73,7 @@ namespace Journals.Web.Tests.TestData
             new object[]
             {
                 CreateJournalViewModel(
-                    id: 5,
+                    5,
                     contentType: string.Empty
                 ),
                 HttpStatusCode.OK
@@ -149,7 +81,7 @@ namespace Journals.Web.Tests.TestData
             new object[]
             {
                 CreateJournalViewModel(
-                    id: 6,
+                    6,
                     description: string.Empty
                 ),
                 HttpStatusCode.OK
@@ -157,7 +89,7 @@ namespace Journals.Web.Tests.TestData
             new object[]
             {
                 CreateJournalViewModel(
-                    id: 7,
+                    7,
                     fileName: "TestFilename7.jpg"
                 ),
                 HttpStatusCode.OK
@@ -165,15 +97,15 @@ namespace Journals.Web.Tests.TestData
             new object[]
             {
                 CreateJournalViewModel(
-                    id: 8,
-                    content: new byte[1024 * 1024 * 4]
+                    8,
+                    new byte[1024 * 1024 * 4]
                 ),
                 HttpStatusCode.OK
             },
             new object[]
             {
                 CreateJournalViewModel(
-                    id: int.MaxValue
+                    int.MaxValue
                 ),
                 HttpStatusCode.InternalServerError
             }
@@ -183,7 +115,7 @@ namespace Journals.Web.Tests.TestData
         public IEnumerable<object[]> GetInvalidIdsAndExpectedStatusCodes() => new List<object[]>
         {
             new object[] {-1, HttpStatusCode.NotFound},
-            new object[] {3, HttpStatusCode.NotFound},
+            new object[] {30, HttpStatusCode.NotFound},
             new object[] {4, HttpStatusCode.NotFound},
             new object[] {5, HttpStatusCode.NotFound},
             new object[] {6, HttpStatusCode.NotFound},
@@ -207,44 +139,43 @@ namespace Journals.Web.Tests.TestData
                     contentType: "application/pdf",
                     title: "TesterUpdated1",
                     userId: 2
-                )
+                ), 2
             },
             new object[]
             {
                 CreateJournalUpdateViewModel(
-                    id: 1,
+                    1,
                     description: "DescriptionUpdated1"
-                )
+                ), 2
             },
             new object[]
             {
                 CreateJournalUpdateViewModel(
-                    id: 1,
+                    1,
                     fileName: "TestFilenameUpdated1.pdf"
-                )
+                ), 2
             },
             new object[]
             {
                 CreateJournalUpdateViewModel(
-                    id: 2,
+                    2,
                     contentType: "application/octet-stream"
-                )
+                ), 2 
             },
             new object[]
             {
                 CreateJournalUpdateViewModel(
-                    id: 1,
+                    1,
                     title: "TesterUpdated1"
-                )
+                ), 2
             },
             new object[]
             {
                 CreateJournalUpdateViewModel(
-                    id: 1,
+                    1,
                     userId: 2
-                )
-            },
-
+                ), 2
+            }
         };
 
 
@@ -278,11 +209,10 @@ namespace Journals.Web.Tests.TestData
                 ),
                 HttpStatusCode.OK
             },
-            
             new object[]
             {
                 CreateJournalUpdateViewModel(
-                    id: int.MaxValue
+                    int.MaxValue
                 ),
                 HttpStatusCode.InternalServerError
             }
@@ -300,7 +230,7 @@ namespace Journals.Web.Tests.TestData
         {
             var file = CreateHttpPostedFile(content, fileName, contentType);
 
-            var journalViewModel = new JournalViewModel()
+            var journalViewModel = new JournalViewModel
             {
                 Id = id,
                 Description = description,
@@ -326,7 +256,7 @@ namespace Journals.Web.Tests.TestData
         {
             var file = CreateHttpPostedFile(content, fileName, contentType);
 
-            var journalViewModel = new JournalUpdateViewModel()
+            var journalViewModel = new JournalUpdateViewModel
             {
                 Id = id,
                 Description = description,
@@ -335,7 +265,7 @@ namespace Journals.Web.Tests.TestData
                 Content = content ?? (forceNullContent ? null : new byte[1]),
                 Title = title,
                 UserId = userId,
-                File = file               
+                File = file
             };
             return journalViewModel;
         }
@@ -344,10 +274,10 @@ namespace Journals.Web.Tests.TestData
         {
             var file = Mock.Create<HttpPostedFileBase>();
 
-            file.Arrange((f) => f.InputStream).Returns(content != null ? new MemoryStream(content) : Stream.Null);
-            file.Arrange((f) => f.FileName).Returns(fileName);
-            file.Arrange((f) => f.ContentType).Returns(contentType);
-            file.Arrange((f) => f.ContentLength).Returns(content?.Length ?? -1);
+            file.Arrange(f => f.InputStream).Returns(content != null ? new MemoryStream(content) : Stream.Null);
+            file.Arrange(f => f.FileName).Returns(fileName);
+            file.Arrange(f => f.ContentType).Returns(contentType);
+            file.Arrange(f => f.ContentLength).Returns(content?.Length ?? -1);
             return file;
         }
 
@@ -361,8 +291,8 @@ namespace Journals.Web.Tests.TestData
             int userId = 1,
             DateTime? modifiedDate = null,
             bool forceNullContent = false)
-        {         
-            var journalViewModel = new Journal()
+        {
+            var journalViewModel = new Journal
             {
                 Id = id,
                 Description = description,
