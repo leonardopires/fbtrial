@@ -1,9 +1,10 @@
-﻿using Journals.Model;
+﻿using System;
+using Journals.Model;
 using System.Collections.Generic;
 
 namespace Journals.Repository
 {
-    public interface ISubscriptionRepository
+    public interface ISubscriptionRepository : IDisposable
     {
         List<Journal> GetAllJournals();
 

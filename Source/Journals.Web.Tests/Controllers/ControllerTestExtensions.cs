@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web.Mvc;
+using FluentAssertions;
 
 namespace Journals.Web.Tests.Controllers
 {
@@ -42,6 +43,20 @@ namespace Journals.Web.Tests.Controllers
             return string.Join("\n\n", modelState.Values.SelectMany(m => m.Errors).Select(e => $"Error: {e.ErrorMessage} - Exception: {e.Exception}"));
         }
 
-
+        /// <summary>
+        /// Invokes the specified action.
+        /// </summary>
+        /// <typeparam name="TResult">The type of the action result.</typeparam>
+        /// <param name="controller">The controller.</param>
+        /// <param name="actionName">Name of the action.</param>
+        /// <param name="arguments">The arguments.</param>
+        /// <returns>
+        ///   <see cref="TResult" />
+        /// </returns>
+        public static TResult InvokeAction<TResult>(this ControllerBase controller, string actionName, params object[] arguments)
+                    where TResult : ActionResult
+        {
+            return controller.GetType().GetMethod(actionName)?.Invoke(controller, null)?.As<TResult>();
+        }
     }
 }

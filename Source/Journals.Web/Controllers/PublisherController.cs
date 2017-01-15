@@ -157,10 +157,5 @@ namespace Journals.Web.Controllers
             }
             return result;
         }
-
-        protected override void OnException(ExceptionContext filterContext)
-        {
-            base.OnException(filterContext);
-        }
     }
 }

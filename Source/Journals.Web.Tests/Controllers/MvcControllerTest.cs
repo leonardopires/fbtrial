@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
+using FluentAssertions.Common;
 using Telerik.JustMock;
 
 namespace Journals.Web.Tests.Controllers
@@ -92,6 +94,37 @@ namespace Journals.Web.Tests.Controllers
         private static readonly Lazy<TTestData> _data = new Lazy<TTestData>(() => new TTestData());
 
         public static TTestData Data => _data.Value;
+
+        /// <summary>
+        /// Retrieves the value of a member from the Data class.
+        /// </summary>
+        /// <param name="memberName">Name of the member that contains the value be retrieved.</param>
+        /// <returns>
+        ///   <see cref="System.Collections.Generic.IEnumerable&lt;System.Object[]&gt;" />
+        /// </returns>
+        public static IEnumerable<object[]> GetDataMember(string memberName)
+        {
+            IEnumerable<object[]> result = new object[][] { };
+
+            var type = Data.GetType();
+
+            var property = type.GetProperty(memberName, typeof(IEnumerable<object[]>));
+
+            if (property != null)
+            {
+                result = (IEnumerable<object[]>) property.GetValue(Data);
+            }
+            else
+            {
+                var method = type.GetParameterlessMethod(memberName);
+
+                if (method != null)
+                {
+                    result = (IEnumerable<object[]>) method.Invoke(Data, null);
+                }
+            }
+            return result;
+        }
 
     }
 }

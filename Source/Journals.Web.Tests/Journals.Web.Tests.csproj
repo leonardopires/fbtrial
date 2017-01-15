@@ -12,11 +12,12 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Journals.Web.Tests</RootNamespace>
     <AssemblyName>Journals.Web.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -58,6 +59,10 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Reflection.TypeExtensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Reflection.TypeExtensions.4.3.0\lib\net46\System.Reflection.TypeExtensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Web" />
     <Reference Include="System.Web.ApplicationServices" />
     <Reference Include="System.Web.Extensions" />
@@ -157,8 +162,13 @@
     <Compile Include="Controllers\MvcControllerTest.cs" />
     <Compile Include="Controllers\PublisherDataControllerTest.cs" />
     <Compile Include="Controllers\ControllerTestExtensions.cs" />
+    <Compile Include="Controllers\SubscriberDataControllerTest.cs" />
+    <Compile Include="TestData\ITestData.cs" />
     <Compile Include="TestData\JournalTestData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestData\RepositoryTestData.cs" />
+    <Compile Include="TestData\StaticPagesTestData.cs" />
+    <Compile Include="TestData\SubscriptionTestData.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.config" />

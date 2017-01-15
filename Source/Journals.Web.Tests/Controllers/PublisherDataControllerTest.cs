@@ -43,15 +43,7 @@ namespace Journals.Web.Tests.Controllers
             return new PublisherController(repository, membershipService);
         }
 
-
-        public static IEnumerable<object[]> InvalidJournalViewModels => Data.GetInvalidJournalViewModels();
-
-        public static IEnumerable<object[]> ValidJournalViewModelsForCreate => Data.GetValidJournalViewModelsForCreate();
-        public static IEnumerable<object[]> InvalidIdsAndExpectedStatusCodes => Data.GetInvalidIdsAndExpectedStatusCodes();
-
-        public static IEnumerable<object[]> ValidUpdatedJournals => Data.GetValidUpdatedJournals();
-
-        public static IEnumerable<object[]> InvalidUpdatedJournals => Data.GetInvalidUpdatedJournals();
+        
 
         public static List<Journal> DefaultData => Data.GetDefaultData();
 
@@ -105,7 +97,7 @@ namespace Journals.Web.Tests.Controllers
         }
 
         [Theory]
-        [MemberData(nameof(InvalidIdsAndExpectedStatusCodes))]
+        [MemberData(nameof(GetDataMember), nameof(Data.GetInvalidIdsAndExpectedStatusCodes))]
         public void GetFile_Returns_StatusCode_OnErrors(int fileId, HttpStatusCode httpStatus)
         {
             var controller = GetController();
@@ -115,7 +107,7 @@ namespace Journals.Web.Tests.Controllers
         }
 
         [Theory]
-        [MemberData(nameof(InvalidJournalViewModels))]
+        [MemberData(nameof(GetDataMember), nameof(Data.GetInvalidJournalViewModels))]
         public void Create_Post_With_Invalid_Args_Returns_StatusCode(JournalViewModel journal, HttpStatusCode statusCode)
         {
             var controller = GetController("POST");
@@ -138,7 +130,7 @@ namespace Journals.Web.Tests.Controllers
         }
 
         [Theory]
-        [MemberData(nameof(ValidJournalViewModelsForCreate))]
+        [MemberData(nameof(GetDataMember), nameof(Data.GetValidJournalViewModelsForCreate))]
         public void Create_Post_With_Valid_Args_Redirects_To_Index(JournalViewModel journal)
         {
             var controller = GetController("POST");
@@ -169,7 +161,7 @@ namespace Journals.Web.Tests.Controllers
         }
 
         [Theory]
-        [MemberData(nameof(InvalidIdsAndExpectedStatusCodes))]
+        [MemberData(nameof(GetDataMember), nameof(Data.GetInvalidIdsAndExpectedStatusCodes))]
         public void Delete_Id_With_Valid_Id_Shows_Error(int id, HttpStatusCode statusCode)
         {
             var controller = GetController();
@@ -209,7 +201,7 @@ namespace Journals.Web.Tests.Controllers
         }
 
         [Theory]
-        [MemberData(nameof(InvalidJournalViewModels))]
+        [MemberData(nameof(GetDataMember), nameof(Data.GetInvalidJournalViewModels))]
         public void Delete_With_Invalid_Model_Does_Not_Remove_Data(JournalViewModel viewModel, HttpStatusCode statusCode)
         {
             int count = int.MinValue;
@@ -252,7 +244,7 @@ namespace Journals.Web.Tests.Controllers
 
 
         [Theory]
-        [MemberData(nameof(InvalidIdsAndExpectedStatusCodes))]
+        [MemberData(nameof(GetDataMember), nameof(Data.GetInvalidIdsAndExpectedStatusCodes))]
         public void Edit_Id_With_Valid_Id_Shows_Error(int id, HttpStatusCode statusCode)
         {
             var controller = GetController();
@@ -266,7 +258,7 @@ namespace Journals.Web.Tests.Controllers
 
 
         [Theory]
-        [MemberData(nameof(ValidUpdatedJournals))]
+        [MemberData(nameof(GetDataMember), nameof(Data.GetValidUpdatedJournals))]
         public void Edit_With_Valid_Model_Edits_Data(JournalUpdateViewModel viewModel)
         {
             int count = int.MinValue;
@@ -311,7 +303,7 @@ namespace Journals.Web.Tests.Controllers
 
 
         [Theory]
-        [MemberData(nameof(InvalidUpdatedJournals))]
+        [MemberData(nameof(GetDataMember), nameof(Data.GetInvalidUpdatedJournals))]
         public void Edit_With_Invalid_Model_Does_Not_Change_Data(JournalUpdateViewModel viewModel, HttpStatusCode expectedStatusCode)
         {
             int count = int.MinValue;

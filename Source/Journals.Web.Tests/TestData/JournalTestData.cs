@@ -15,22 +15,10 @@ using Telerik.JustMock.Helpers;
 
 namespace Journals.Web.Tests.TestData
 {
-
-    public interface ITestData<TModel>
-    {
-        List<TModel> GetDefaultData();
-    }
-
-    public interface ITestData<TModel, in TRepository> : ITestData<TModel>
+    public class JournalTestData : RepositoryTestData<Journal, IJournalRepository>
     {
 
-        void SetUpRepository(List<TModel> models, TRepository modelRepository);
-    }
-
-    public class JournalTestData : ITestData<Journal, IJournalRepository>
-    {
-
-        public void SetUpRepository(List<Journal> models, IJournalRepository modelRepository)
+        public override void SetUpRepository(List<Journal> models, IJournalRepository modelRepository)
         {
             var membershipRepository = Mock.Create<IStaticMembershipService>();
             var userMock = Mock.Create<MembershipUser>();
@@ -95,7 +83,7 @@ namespace Journals.Web.Tests.TestData
                                });
         }
 
-        public List<Journal> GetDefaultData() => new List<Journal>()
+        public override List<Journal> GetDefaultData() => new List<Journal>()
         {
             CreateJournal(),
             CreateJournal(id: 2)
@@ -389,5 +377,4 @@ namespace Journals.Web.Tests.TestData
         }
 
     }
-
 }
