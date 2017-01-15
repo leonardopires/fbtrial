@@ -12,6 +12,7 @@ using System.Web.Mvc;
 using Autofac;
 using FluentAssertions;
 using FluentAssertions.Mvc;
+using Journals.Web.Tests.Framework;
 using Journals.Web.Tests.TestData;
 using Microsoft.Data.OData.Query.SemanticAst;
 using Newtonsoft.Json;
@@ -275,24 +276,10 @@ namespace Journals.Web.Tests.Controllers
 
             controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid: {0}", controller.ModelState.Dump());
 
-            edited.Should().NotBeNull();
-
-            edited.Id.Should().Be(viewModel.Id);
-            edited.FileName.Should().Be(viewModel.FileName);
-            edited.Content.Should().NotBeNull().And.Match(c => c.SequenceEqual(viewModel.Content));
-            edited.ContentType.Should().Be(viewModel.ContentType);
-
-            edited.Title.Should().Be(viewModel.Title);
-            edited.Description.Should().Be(viewModel.Description);
-            edited.UserId.Should().Be(viewModel.UserId);
-
+            edited.ShouldBeEquivalentTo(viewModel);
 
             result.Should().BeRedirectToRouteResult().WithAction("Index");
-
-
-
         }
-
 
 
         [Theory]
@@ -321,19 +308,7 @@ namespace Journals.Web.Tests.Controllers
 
                 var edited = journalRepository.GetJournalById(viewModel.Id);
 
-                edited.Id.Should().Be(originalViewModel.Id);
-
-                edited.FileName.Should().Be(originalViewModel.FileName);
-
-                edited.Content.Should().NotBeNull().And.Match(c => c.SequenceEqual(originalViewModel.Content));
-
-                edited.ContentType.Should().Be(originalViewModel.ContentType);
-
-                edited.Title.Should().Be(originalViewModel.Title);
-
-                edited.Description.Should().Be(originalViewModel.Description);
-
-                edited.UserId.Should().Be(originalViewModel.UserId);
+                edited.ShouldBeEquivalentTo(originalViewModel);
 
 
                 result.Should().BeViewResult("validation error should appear to the user")
@@ -349,10 +324,6 @@ namespace Journals.Web.Tests.Controllers
                       .Be((int) expectedStatusCode);
             }
 
-        }
-
-        public void Dispose()
-        {
         }
 
     }

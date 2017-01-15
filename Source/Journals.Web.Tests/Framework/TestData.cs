@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using Telerik.JustMock;
 
-namespace Journals.Web.Tests.TestData
+namespace Journals.Web.Tests.Framework
 {
     public abstract class TestData<TModel> : ITestData<TModel>
     {

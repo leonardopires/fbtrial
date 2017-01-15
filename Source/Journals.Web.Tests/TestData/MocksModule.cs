@@ -1,15 +1,18 @@
-﻿using System.Linq;
-using System.Web.Security;
+﻿using System.Web.Security;
 using Autofac;
 using Journals.Model;
 using Journals.Repository;
-using Journals.Web.Tests.TestData;
+using Journals.Web.Tests.Framework;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
 
-namespace Journals.Web.Tests.Controllers
+namespace Journals.Web.Tests.Framework
 {
-    public class MocksModule : Module
+}
+
+namespace Journals.Web.Tests.TestData
+{
+    public class MocksModule : InitializationModule
     {
         protected override void Load(ContainerBuilder builder)
         {
@@ -36,8 +39,24 @@ namespace Journals.Web.Tests.Controllers
 
                        }).As<IStaticMembershipService>().InstancePerLifetimeScope();
 
-            builder.RegisterType<MockJournalRepository>().As<IJournalRepository>().InstancePerLifetimeScope();
-            builder.RegisterType<MockSubscriptionRepository>().As<ISubscriptionRepository>().InstancePerLifetimeScope();
+            builder.Register(
+                       c =>
+                       {
+                           var repo = new MockJournalRepository(c.Resolve<ITestData<Journal>>());
+                           repo.ArrangeMock();
+
+                           return repo;
+                       }).As<IJournalRepository>().InstancePerLifetimeScope();
+
+            builder.Register(
+                c =>
+                {
+                    var repo = new MockSubscriptionRepository(c.Resolve<IJournalRepository>(), c.Resolve<IStaticMembershipService>(), c.Resolve<ITestData<Subscription>>());
+                    repo.ArrangeMock();
+
+                    return repo;
+                }
+                ).As<ISubscriptionRepository>().InstancePerLifetimeScope();
         }
 
     }

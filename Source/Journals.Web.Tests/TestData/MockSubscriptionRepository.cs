@@ -1,31 +1,30 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Journals.Model;
 using Journals.Repository;
+using Journals.Web.Tests.Framework;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
 
 namespace Journals.Web.Tests.TestData
 {
-    public class MockSubscriptionRepository : ISubscriptionRepository
+    public class MockSubscriptionRepository : MockRepositoryWrapper<Subscription, ISubscriptionRepository>, ISubscriptionRepository
     {
-        private readonly List<Subscription> models;
-        private ISubscriptionRepository mock;
+
+        private readonly IJournalRepository journalRepository;
+        private readonly IStaticMembershipService membershipRepository;
 
         public MockSubscriptionRepository(
             IJournalRepository journalRepository,
             IStaticMembershipService membershipRepository,
-            ITestData<Subscription> testData)
+            ITestData<Subscription> testData) : base(testData)
         {
-            this.models = new List<Subscription>(testData.GetDefaultData());
-
-            mock = Mock.Create<ISubscriptionRepository>();
-
-
-            ArrangeMock(journalRepository, membershipRepository);
+            this.journalRepository = journalRepository;
+            this.membershipRepository = membershipRepository;
         }
 
-        private void ArrangeMock(IJournalRepository journalRepository, IStaticMembershipService membershipRepository)
+        public override void ArrangeMock()
         {
             mock.Arrange((r) => r.GetAllJournals()).Returns(models.Select(m => m.Journal).ToList());
 
@@ -74,13 +73,16 @@ namespace Journals.Web.Tests.TestData
                             Status = index >= 0 && models.Count(i => i.Id == id && i.UserId == userId) == 0
                         };
                     });
-        }
 
 
-        public void Dispose()
-        {
-            mock.Dispose();
+            mock.Arrange((r) => r.GetJournalsForSubscriber(Arg.IsAny<string>())).Returns(
+                    (string username) =>
+                    {
+                        var subscriptions = models.Where(i => i.User?.UserName == username).ToList();
+                        return subscriptions;
+                    });
         }
+
 
         public List<Journal> GetAllJournals()
         {
@@ -106,6 +108,5 @@ namespace Journals.Web.Tests.TestData
         {
             return mock.GetJournalsForSubscriber(userName);
         }
-
     }
 }

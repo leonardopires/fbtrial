@@ -8,6 +8,7 @@ using Autofac;
 using Autofac.Core;
 using Autofac.Integration.Mvc;
 using FluentAssertions.Common;
+using Journals.Web.Tests.Framework;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
 using Xunit.Abstractions;

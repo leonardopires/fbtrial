@@ -4,7 +4,7 @@ using System.Linq;
 using System.Web.Mvc;
 using FluentAssertions;
 
-namespace Journals.Web.Tests.Controllers
+namespace Journals.Web.Tests.Framework
 {
     public static class ControllerTestExtensions
     {

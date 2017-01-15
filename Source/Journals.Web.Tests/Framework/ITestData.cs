@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Journals.Web.Tests.TestData
+namespace Journals.Web.Tests.Framework
 {
 
     public interface ITestData<TModel>

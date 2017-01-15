@@ -1,28 +1,55 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Journals.Model;
 using Journals.Repository;
+using Journals.Web.Tests.Framework;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
 
 namespace Journals.Web.Tests.TestData
 {
-    public class MockJournalRepository : IJournalRepository
+    public abstract class MockRepositoryWrapper<TItem, TRepository> : IMockWrapper<TRepository>, ICollectionRepository<TItem>
+        where TRepository : IDisposable
     {
-        private readonly IJournalRepository mock;
-        private readonly List<Journal> models;
 
+        protected TRepository mock;
+        protected List<TItem> models;
 
-        public MockJournalRepository(ITestData<Journal> testData)
+        public MockRepositoryWrapper(ITestData<TItem> testData)
         {
-            models = new List<Journal>(testData.GetDefaultData());
+            models = new List<TItem>(testData.GetDefaultData());
 
-            mock = Mock.Create<IJournalRepository>();
-
-            ArrangeMock();
+            mock = Mock.Create<TRepository>();
         }
 
-        private void ArrangeMock()
+        public abstract void ArrangeMock();
+
+        public void Dispose()
+        {
+            mock.Dispose();
+        }
+
+        TRepository IMockWrapper<TRepository>.GetMock()
+        {
+            return mock;
+        }
+
+        ICollection<TItem> ICollectionRepository<TItem>.GetItems()
+        {
+            return models;
+        }
+
+    }
+
+    public class MockJournalRepository : MockRepositoryWrapper<Journal, IJournalRepository>, IJournalRepository
+    {
+
+        public MockJournalRepository(ITestData<Journal> testData) : base(testData)
+        {
+        }
+
+        public override void ArrangeMock()
         {
             mock.Arrange(r => r.GetAllJournals(Arg.IsAny<int>())).Returns((int id) => models.Where(i => i.UserId == id).ToList());
 
@@ -74,11 +101,6 @@ namespace Journals.Web.Tests.TestData
                         }
                         return new OperationStatus {Status = index >= 0};
                     });
-        }
-
-        public void Dispose()
-        {
-            mock.Dispose();
         }
 
         public List<Journal> GetAllJournals(int userId)

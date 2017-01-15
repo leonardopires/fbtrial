@@ -10,6 +10,7 @@ using FluentAssertions.Mvc;
 using Journals.Model;
 using Journals.Repository;
 using Journals.Web.Controllers;
+using Journals.Web.Tests.Framework;
 using Journals.Web.Tests.TestData;
 using Telerik.JustMock.Helpers;
 using Xunit;
@@ -40,11 +41,16 @@ namespace Journals.Web.Tests.Controllers
         }
 
         [Theory]
-        [InlineData(2)]
-        [InlineData(2)]
-        public void Index_Has_All_Journals(int count)
+        [InlineData(2, false)]
+        [InlineData(0, true)]
+        public void Index_Has_All_Journals(int count, bool testNullJournals)
         {
-            var repo = Container.Resolve<IJournalRepository>();
+            var repo = Container.Resolve<ISubscriptionRepository>().As<IMockWrapper<ISubscriptionRepository>>();
+
+            if (testNullJournals)
+            {
+                repo.GetMock().Arrange(r => r.GetAllJournals()).Returns((List<Journal>)null);
+            }
 
             var controller = GetController();
 

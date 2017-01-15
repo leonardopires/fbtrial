@@ -5,6 +5,7 @@ using System.Net;
 using System.Web.Security;
 using Journals.Model;
 using Journals.Repository;
+using Journals.Web.Tests.Framework;
 using Serilog;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;

@@ -1,16 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Journals.Web.Tests.Framework;
 
 namespace Journals.Web.Tests.TestData
 {
-    public class StaticPagesTestData : ITestData<object>
+    public class StaticPagesTestData : TestData<object>
     {
-
-        public List<object> GetDefaultData()
-        {
-            return null;
-        }
-
         public IEnumerable<object[]> HomeControllerActions =>
             new List<object[]>
             {
