@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Serilog;
 
 namespace Journals.Web
 {
@@ -11,14 +12,22 @@ namespace Journals.Web
     {
         public static void Main(string[] args)
         {
+            Log.Logger = new LoggerConfiguration()
+                 .Enrich.FromLogContext()
+                 .WriteTo.LiterateConsole()         
+                 .WriteTo.RollingFile(pathFormat: "logs/Journals-{Date}.log", shared: true)        
+                 .CreateLogger();
+
             var host = new WebHostBuilder()
                 .UseKestrel()
                 .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseIISIntegration()                
-                .UseStartup<Startup>()     
+                .UseIISIntegration()
+                .UseStartup<Startup>()
                 .Build();
 
             host.Run();
         }
+
+
     }
 }

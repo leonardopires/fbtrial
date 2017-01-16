@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿
+using Microsoft.AspNet.Identity.CoreCompat;
+using Classic = Microsoft.AspNet.Identity.EntityFramework;
 
 namespace Journals.Model
 {

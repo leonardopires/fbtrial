@@ -5,26 +5,11 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-@section Style
-{
-    <style type="text/css">
-        .table {
-            table-layout: fixed;
-        }
-
-            .table td {
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-    </style>
-}
-
 <h2>List of Journals for Subscription</h2>
 
-@if (Model == null)
+@if (Model == null || !Model.Any())
 {
-    <div>No journals are available for subscription.</div>
+    <div class="alert alert-danger">No journals are available for subscription.</div>
 }
 else
 {

@@ -24,7 +24,8 @@
       "target": "project"
     },
     "NETStandard.Library": "1.6.1",
-    "xunit.runner.visualstudio": "2.2.0-beta4-build1194"
+    "xunit.runner.visualstudio": "2.2.0-beta4-build1194",
+    "Microsoft.AspNetCore.TestHost": "1.1.0"
   },
   "tools": {
 

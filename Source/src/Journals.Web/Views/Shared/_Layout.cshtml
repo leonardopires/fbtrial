@@ -33,7 +33,19 @@
                     <li><a asp-area="" asp-controller="Home" asp-action="Index">Home</a></li>
                     <li><a asp-area="" asp-controller="Home" asp-action="About">About</a></li>
                     <li><a asp-area="" asp-controller="Home" asp-action="Contact">Contact</a></li>
+                    @if (User != null)
+                    {
+                        if (User.IsInRole("Subscriber"))
+                        {
+                            <li><a asp-area="" asp-controller="Subscriber" asp-action="Index">All Publications</a></li>
+                        }
+                        if (User.IsInRole("Publishers"))
+                        {
+                            <li><a asp-area="" asp-controller="Publisher" asp-action="Index">Manage Publications</a></li>
+                        }
+                    }
                 </ul>
+
                 @await Html.PartialAsync("_LoginPartial")
             </div>
         </div>

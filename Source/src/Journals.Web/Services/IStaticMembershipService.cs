@@ -1,10 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Journals.Model;
 using Journals.Web.Models;
 
 namespace Journals.Repository
 {
-    public interface IStaticMembershipService
+    public interface IStaticMembershipService : IDisposable
     {
         ApplicationUser GetUser();
 

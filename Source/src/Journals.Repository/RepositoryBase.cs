@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 
 namespace Journals.Repository
 {
-    public class RepositoryBase<T> : IDisposable where T : DbContext, IDisposedTracker, new()
+    public class RepositoryBase<T> : IDisposable where T : DbContext, IDisposedTracker
     {
 
         private readonly Func<T> contextFactory;
@@ -151,7 +151,10 @@ namespace Journals.Repository
 
         public virtual void Dispose()
         {
-            if (DataContext != null) DataContext.Dispose();
+            if (_DataContext != null && !_DataContext.IsDisposed)
+            {
+                _DataContext.Dispose();
+            }
         }
     }
 }

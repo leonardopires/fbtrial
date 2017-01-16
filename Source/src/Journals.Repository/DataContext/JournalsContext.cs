@@ -1,13 +1,14 @@
 ﻿using Journals.Model;
 using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration.Conventions;
+using System.Linq.Expressions;
 
 namespace Journals.Repository.DataContext
 {
     public class JournalsContext : DbContext, IDisposedTracker
     {
-        public JournalsContext()
-            : base("name=JournalsDB")
+        public JournalsContext(string connectionStringOrName)
+            : base(connectionStringOrName)
         {
         }
 
@@ -22,7 +23,7 @@ namespace Journals.Repository.DataContext
             modelBuilder.Entity<Journal>().ToTable("Journals");
             modelBuilder.Entity<Subscription>().ToTable("Subscriptions");
             base.OnModelCreating(modelBuilder);
-        }
+        }        
 
         protected override void Dispose(bool disposing)
         {

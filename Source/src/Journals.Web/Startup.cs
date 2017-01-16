@@ -5,9 +5,10 @@ using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Journals.Model;
+using Journals.Repository.DataContext;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNet.Identity.CoreCompat;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +16,10 @@ using Microsoft.Extensions.Logging;
 using Journals.Web.Data;
 using Journals.Web.Models;
 using Journals.Web.Services;
+using Microsoft.AspNetCore.Http;
 using Serilog;
+using IdentityRole = Microsoft.AspNetCore.Identity.EntityFrameworkCore.IdentityRole;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Journals.Web
 {
@@ -28,10 +32,6 @@ namespace Journals.Web
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
 
-            Log.Logger = new LoggerConfiguration()
-              .Enrich.FromLogContext()
-              .WriteTo.LiterateConsole()
-              .CreateLogger();
 
             if (env.IsDevelopment())
             {
@@ -54,18 +54,22 @@ namespace Journals.Web
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddIdentity<ApplicationUser, IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddDefaultTokenProviders();
 
-            services.AddMvc();
+            services.AddIdentity<ApplicationUserCore, ApplicationRoleCore>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders()
+                ;
+
+            services.AddMvc(options => options.RespectBrowserAcceptHeader = true);
 
             var builder = new ContainerBuilder();
 
+            builder.Register(c => Configuration).As<IConfigurationRoot>().As<IConfiguration>();
+
             builder.RegisterModule<JournalsWebModule>();
 
-            builder.Populate(services);            
 
+            builder.Populate(services);
 
             this.ApplicationContainer = builder.Build();
 
@@ -76,14 +80,19 @@ namespace Journals.Web
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IApplicationLifetime appLifetime)
         {
             loggerFactory.AddSerilog();
+            loggerFactory.AddDebug();
+            loggerFactory.AddConsole();
 
             appLifetime.ApplicationStopped.Register(Log.CloseAndFlush);
+
+            appLifetime.ApplicationStopped.Register(() => this.ApplicationContainer.Dispose());
 
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 app.UseDatabaseErrorPage();
                 app.UseBrowserLink();
+                
             }
             else
             {
@@ -96,12 +105,58 @@ namespace Journals.Web
 
             // Add external authentication middleware below. To configure them please see http://go.microsoft.com/fwlink/?LinkID=532715
 
+
             app.UseMvc(routes =>
+                       {
+                           routes.MapRoute(
+                               name: "default",
+                               template: "{controller=Home}/{action=Index}/{id?}");
+
+                       });
+
+            if (env.IsDevelopment())
             {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
-            });
+                var logger = loggerFactory.CreateLogger("INITDB");
+
+                InitializeDB(logger);
+            }
         }
+
+        /// <summary>
+        /// Initializes the database.
+        /// </summary>
+        /// <param name="logger">The logger.</param>
+        private void InitializeDB(ILogger logger)
+        {
+            List<Task> tasks = new List<Task>();
+
+            try
+            {
+                var seeders =
+                    ApplicationContainer.ResolveOptional<IEnumerable<IDbSeeder>>()?.ToList();
+
+                if (seeders != null
+                    && seeders.Any())
+                {
+                    foreach (var seeder in seeders)
+                    {
+                        logger.LogInformation($"Initializing database. Initializer:", seeder);
+                        tasks.Add(seeder.Seed());
+                    }
+                    Task.WaitAll(tasks.ToArray(), TimeSpan.FromMinutes(1));
+                    logger.LogInformation("Finished DB Initialization.");
+                }
+                else
+                {
+                    logger.LogWarning("No database seeders found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical(new EventId(ex.HResult, ex.Message), "Error setting up the database.");
+            }
+        }
+
     }
+
 }

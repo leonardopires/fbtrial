@@ -7,35 +7,33 @@ using Journals.Model;
 using Journals.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Internal;
 
 namespace Journals.Web.Controllers
 {
     [Authorize]
-    public class SubscriberController : Controller
+    [FormatFilter]
+    public class SubscriberController : JournalControllerBase
     {
 
         private readonly IStaticMembershipService membership;
-
-        private IJournalRepository _journalRepository;
 
         private readonly ISubscriptionRepository _subscriptionRepository;
 
         private IMapper Mapper { get; }
 
         public SubscriberController(
-            IJournalRepository journalRepo,
             ISubscriptionRepository subscriptionRepo,
             IStaticMembershipService membership, 
             IMapper mapper)
         {
-            _journalRepository = journalRepo;
             _subscriptionRepository = subscriptionRepo;
             this.membership = membership;
             Mapper = mapper;
         }
 
-        public IActionResult Index()
-        {
+        public IActionResult Index(string format=null)
+        {            
             IActionResult result;
             var journals = _subscriptionRepository.GetAllJournals();
 
@@ -53,20 +51,19 @@ namespace Journals.Web.Controllers
                         journal.IsSubscribed = true;
                     }
                 }
-
-                result = View(subscriberModel);
+                result = Result(format, subscriberModel);
             }
 
             else
             {
-                result = View(new List<SubscriptionViewModel>());
+                result = Result(format, new List<SubscriptionViewModel>());
             }
             return result;
         }
 
         private string GetUserId()
         {
-            return membership.GetUser().Id;
+            return membership.GetUser()?.Id;
         }
 
         public IActionResult Subscribe(int journalId)
@@ -94,6 +91,16 @@ namespace Journals.Web.Controllers
                 result = RedirectToAction(actionName);
             }
             return result;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _subscriptionRepository.Dispose();
+                membership.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
     }

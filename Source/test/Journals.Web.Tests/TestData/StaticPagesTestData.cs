@@ -10,7 +10,6 @@ namespace Journals.Web.Tests.TestData
         public IEnumerable<object[]> HomeControllerActions =>
             Data(
             
-                Item("Index", "Open Journal Publishers"),
                 Item("About", "Your app description page."),
                 Item("Contact", "Your contact page.")
             );

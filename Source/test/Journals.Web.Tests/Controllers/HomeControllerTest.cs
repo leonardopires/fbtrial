@@ -41,6 +41,18 @@ namespace Journals.Web.Tests.Controllers
             Data.GetDefaultData().Should().BeEmpty("there should be no default data for static pages");
         }
 
+        [Fact]
+        public void Echo_Must_Return_Value()
+        {
+            var guid = Guid.NewGuid();
+            var controller = GetController();
+
+            var result = controller.Echo(guid.ToString());
+
+            result.Should().BeAssignableTo<JsonResult>().Which.Value.As<string>().Should().Contain(guid.ToString());
+        }
+
+
 
 
     }

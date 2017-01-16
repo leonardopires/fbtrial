@@ -210,6 +210,6 @@ namespace Journals.Web.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
-        }        
+        }               
     }
 }
