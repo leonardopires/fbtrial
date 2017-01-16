@@ -1,5 +1,6 @@
 {
   "version": "1.0.0-*",
+  "testRunner": "xunit",
 
   "dependencies": {
     "Autofac": "4.2.1",
@@ -12,7 +13,10 @@
     "LP.Test.Framework": "1.0.0-*",
     "NETStandard.Library": "1.6.1",
     "NSubstitute": "2.0.1-rc",
-    "xunit.runner.visualstudio": "2.2.0-beta4-build1194"
+//    "xunit.runner.visualstudio": "2.2.0-beta4-build1194"
+  },
+  "tools": {
+
   },
   "frameworks": {
     "net451": {
@@ -25,10 +29,10 @@
       }
     }
   },
-  "testRunner": "xunit"
-  //"frameworks": {
-  //  "netstandard1.6": {
-  //    "imports": "dnxcore50"
-  //  }
-  //}
+
+  "buildOptions": {
+    "copyToOutput": "TestFiles/",
+    "debugType": "full",
+    "preserveCompilationContext": true
+  }
 }

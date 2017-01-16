@@ -9,6 +9,9 @@ using LP.Test.Framework.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Telerik.JustMock;
 using Xunit.Abstractions;
 
 namespace Journals.Web.Tests.Controllers
@@ -34,11 +37,6 @@ namespace Journals.Web.Tests.Controllers
         {
             var controller = Container.Resolve<TController>();
 
-            //controller.ControllerContext = new ControllerContext(Container.Resolve<HttpContext>(new NamedParameter("httpMethod", httpMethod)), new RouteData(), controller);
-//            
-//
-//            var resolver = new AutofacDependencyResolver(Container.BeginLifetimeScope());
-//            DependencyResolver.SetResolver(resolver);
 
             return controller;
         }
@@ -49,26 +47,16 @@ namespace Journals.Web.Tests.Controllers
         /// <param name="builder">The builder.</param>
         protected override void InitializeContainer(ContainerBuilder builder)
         {
-//            builder.Register(
-//                       (c, p) =>
-//                       {
-//                           var mock = Mock.Create<HttpRequestBase>();
-//                           mock.Arrange(r => r.HttpMethod).Returns(p.Named<string>("httpMethod"));
-//                           return mock;
-//                       }).As<HttpRequestBase>();
-//
-//            builder.Register(
-//                       (c, p) =>
-//                       {
-//                           var mock = Mock.Create<HttpContextBase>();
-//                           mock.Arrange(i => i.Request)
-//                               .Returns(
-//                                   c.Resolve<HttpRequestBase>(
-//                                       new NamedParameter("httpMethod", p.Named<string>("httpMethod"))));
-//                           return mock;
-//                       })
-//                .As<HttpContextBase>();                    
-//               
+            builder.Register(c => new LoggerFactory()).As<ILoggerFactory>();
+            builder.Register(
+                c =>
+                {
+                    var provider = new Serilog.Extensions.Logging.SerilogLoggerProvider(Logger);
+                    c.Resolve<ILoggerFactory>().AddProvider(provider);
+                    return provider;
+                }).As<ILoggerProvider>();
+
+            builder.Register(c => c.Resolve<ILoggerFactory>().CreateLogger<TController>()).As<ILogger<TController>>();
 
             builder.RegisterType<TController>();
         }

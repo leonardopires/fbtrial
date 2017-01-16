@@ -21,8 +21,8 @@ namespace Journals.Web.Tests.TestData
 
             builder.RegisterType<JournalTestData>().AsSelf().As<ITestData<Journal>>();
             builder.RegisterType<SubscriptionTestData>().AsSelf().As<ITestData<Subscription>>();
-            builder.RegisterType<StaticPagesTestData>().AsSelf().As<ITestData<object>>();
-            
+            builder.RegisterType<StaticPagesTestData>().AsSelf().As<ITestData<object>>();            
+                
 
             builder.Register(
                        c =>

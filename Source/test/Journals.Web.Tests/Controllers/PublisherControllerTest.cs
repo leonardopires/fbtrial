@@ -6,10 +6,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
 using Journals.Web.Tests.Framework;
 using Journals.Web.Tests.TestData;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Xunit;
@@ -331,6 +333,27 @@ namespace Journals.Web.Tests.Controllers
                       .Be((int)expectedStatusCode);
             }
 
+        }
+
+        [Theory]
+        [MemberData(nameof(GetDataMember), nameof(Data.GetFilesToUpload))]
+        public async Task Upload_File(IFormFile file)
+        {
+            var controller = GetController();
+            var result = await controller.PostUpload(file);
+
+            if (result is StatusCodeResult)
+            {
+                Logger.Error("{@result}", result);
+            }
+
+            var okResult = result.Should().BeAssignableTo<ObjectResult>().Which;
+
+            var status = okResult.Value.As<OperationStatus>();
+
+            Logger.Debug("{@status}", status);
+
+            status.Status.Should().BeTrue();
         }
 
     }

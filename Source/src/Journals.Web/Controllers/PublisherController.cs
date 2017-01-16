@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Security.AccessControl;
 using System.Threading.Tasks;
 using AutoMapper;
 using Journals.Model;
@@ -9,6 +10,7 @@ using Journals.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.Logging;
 
 namespace Journals.Web.Controllers
@@ -19,13 +21,14 @@ namespace Journals.Web.Controllers
 
         private readonly IJournalRepository _journalRepository;
         private readonly IStaticMembershipService _membershipService;
-        private readonly ILogger log;
 
-        public PublisherController(IJournalRepository journalRepo, IStaticMembershipService membershipService, ILogger log)
+        private ILogger Logger { get; }
+
+        public PublisherController(IJournalRepository journalRepo, IStaticMembershipService membershipService, ILogger<PublisherController> logger)
         {
             _journalRepository = journalRepo;
             _membershipService = membershipService;
-            this.log = log;
+            Logger = logger;
         }
 
         public ActionResult Index()
@@ -54,21 +57,35 @@ namespace Journals.Web.Controllers
         }
 
         [HttpPost("upload")]
-        public async Task<IActionResult> PostUpload(IEnumerable<IFormFile> files)
+        public async Task<IActionResult> PostUpload(IFormFile file)
         {
-            foreach (var file in files)
+            try
             {
                 using (var stream = file.OpenReadStream())
                 {
-                    using (var fileStream = System.IO.File.OpenWrite(file.Name))
+                    var directory = new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, "Uploads"));
+                    directory.Create();
+
+                    var localFile = new FileInfo(Path.Combine(directory.ToString(), $"{DateTime.UtcNow:yyyyMMdd-hhmmss}_{file.FileName}"));
+
+                    using (var fileStream = localFile.Open(FileMode.OpenOrCreate, FileAccess.Write, FileShare.Delete))
                     {
                         await stream.CopyToAsync(fileStream);
 
-                        return Ok(new OperationStatus() {Status = true});
+                        Logger.LogDebug($"Saved file {localFile.FullName}");
+
+                        return Ok(new OperationStatus() { Status = true });
                     }
                 }
             }
-            return NoContent();
+            catch (IOException ex)
+            {
+                var status =
+                    OperationStatus.CreateFromException("An error occurred while saving the uploaded file.", ex);
+
+                return StatusCode(500, status);
+            }
+
         }
 
         [HttpPost]
@@ -166,7 +183,7 @@ namespace Journals.Web.Controllers
 
                 if (!opStatus.Status)
                 {
-                    result = StatusCode((int) HttpStatusCode.InternalServerError);
+                    result = StatusCode((int)HttpStatusCode.InternalServerError);
                 }
                 else
                 {
@@ -182,3 +199,4 @@ namespace Journals.Web.Controllers
 
     }
 }
+

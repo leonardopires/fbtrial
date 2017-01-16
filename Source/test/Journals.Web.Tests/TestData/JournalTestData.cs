@@ -9,11 +9,21 @@ using Journals.Web.Tests.Framework;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
 using LP.Test.Framework.Core;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Internal;
+using Serilog;
 
 namespace Journals.Web.Tests.TestData
 {
     public class JournalTestData : TestData<Journal>
     {
+
+        public ILogger Logger { get; }
+
+        public JournalTestData(ILogger logger)
+        {
+            Logger = logger;
+        }
 
         public override List<Journal> GetDefaultData() => new List<Journal>
         {
@@ -305,6 +315,39 @@ namespace Journals.Web.Tests.TestData
                 ModifiedDate = modifiedDate ?? DateTime.UtcNow
             };
             return journalViewModel;
+        }
+
+
+        /// <summary>
+        /// Gets the files to upload.
+        /// </summary>
+        /// <returns>
+        ///   <see cref="IEnumerable{object[]}" />
+        /// </returns>
+        public IEnumerable<object[]> GetFilesToUpload()
+        {
+            return Data(            
+                Item(CreateFormFileFromLocalFile("1/09628d25-ea42-490e-965d-cd4ffb6d4e9d.pdf")),
+                Item(CreateFormFileFromLocalFile("1/8305d848-88d2-4cbd-a33b-5c3dcc548056.pdf")),
+                Item(CreateFormFileFromLocalFile("2/75f29692-237b-4116-95ed-645de5c57b4d.pdf"))
+            );
+        }
+
+        private IFormFile CreateFormFileFromLocalFile(string fileName)
+        {        
+            var file = new FileInfo(Path.Combine(Environment.CurrentDirectory, "Testfiles", fileName));
+
+            Logger.Debug("{@file}", file);
+
+            Stream baseStream = new MemoryStream();
+
+            using (var readStream = file.Open(FileMode.Open, FileAccess.Read, FileShare.Delete))
+            {
+                readStream.CopyTo(baseStream);
+            }
+
+            IFormFile formFile = new FormFile(baseStream, 0, baseStream.Length, file.Name, file.Name);
+                return formFile;
         }
 
     }
