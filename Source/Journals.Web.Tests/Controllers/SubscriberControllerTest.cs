@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Web.Http.Results;
-using System.Web.Mvc;
 using Autofac;
 using AutoMapper;
 using FluentAssertions;
-using FluentAssertions.Mvc;
 using Journals.Model;
 using Journals.Repository;
 using Journals.Web.Controllers;
 using Journals.Web.Tests.Framework;
 using Journals.Web.Tests.TestData;
+using LP.Test.Framework.Core;
+using Microsoft.AspNetCore.Mvc;
 using Telerik.JustMock.Helpers;
 using Xunit;
 using Xunit.Abstractions;
@@ -56,7 +55,9 @@ namespace Journals.Web.Tests.Controllers
 
             var result = controller.Index();
 
-            result.Should().BeViewResult().WithDefaultViewName().Model.As<List<SubscriptionViewModel>>().Should().HaveCount(count);
+            var viewResult = result.Should().BeAssignableTo<ViewResult>().Which;
+            viewResult.ViewName.Should().BeOneOf(string.Empty, null, nameof(controller.Index));
+            viewResult.Model.As<List<SubscriptionViewModel>>().Should().HaveCount(count);
         }
 
         [Theory]
@@ -67,7 +68,7 @@ namespace Journals.Web.Tests.Controllers
 
             var result = controller.Subscribe(id);
 
-            result.Should().BeRedirectToRouteResult().WithAction(nameof(controller.Index));
+            result.Should().BeAssignableTo<RedirectToActionResult>().Which.ActionName.Should().Be(nameof(controller.Index));
         }
 
 
@@ -79,7 +80,7 @@ namespace Journals.Web.Tests.Controllers
 
             var result = controller.Subscribe(id);
 
-            result.Should().BeAssignableTo<HttpStatusCodeResult>().Which.StatusCode.Should().Be((int)expectedStatusCode);
+            result.Should().BeAssignableTo<StatusCodeResult>().Which.StatusCode.Should().Be((int)expectedStatusCode);
         }
 
 
@@ -91,7 +92,7 @@ namespace Journals.Web.Tests.Controllers
 
             var result = controller.UnSubscribe(id);
 
-            result.Should().BeRedirectToRouteResult().WithAction(nameof(controller.Index));
+            result.Should().BeAssignableTo<RedirectToActionResult>().Which.ActionName.Should().Be(nameof(controller.Index));
         }
 
 
@@ -103,7 +104,7 @@ namespace Journals.Web.Tests.Controllers
 
             var result = controller.UnSubscribe(id);
 
-            result.Should().BeAssignableTo<HttpStatusCodeResult>().Which.StatusCode.Should().Be((int)expectedStatusCode);
+            result.Should().BeAssignableTo<StatusCodeResult>().Which.StatusCode.Should().Be((int)expectedStatusCode);
         }
     }
 }

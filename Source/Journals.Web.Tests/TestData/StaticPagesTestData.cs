@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Journals.Web.Tests.Framework;
+using LP.Test.Framework.Core;
 
 namespace Journals.Web.Tests.TestData
 {

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Journals.Web.Controllers
 {
@@ -12,11 +12,11 @@ namespace Journals.Web.Controllers
         /// Display an error message when the upload of a large file is not supported.
         /// </summary>
         /// <returns>
-        ///   <see cref="System.Web.Mvc.ActionResult" />
+        ///   <see cref="ActionResult" />
         /// </returns>
         public ActionResult RequestLengthExceeded()
         {
-            return View(new HandleErrorInfo(new Exception("Uploading file this large is not supported. Please try again."), "Error", "RequestLengthExceeded"));
+            return BadRequest("Uploading file this large is not supported. Please try again.");
         }
     }
 }

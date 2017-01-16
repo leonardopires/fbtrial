@@ -1,8 +1,9 @@
-﻿using System.Web.Security;
-using Autofac;
+﻿using Autofac;
 using Journals.Model;
 using Journals.Repository;
 using Journals.Web.Tests.Framework;
+using LP.Test.Framework.Core;
+using Microsoft.Extensions.Logging;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
 
@@ -21,15 +22,13 @@ namespace Journals.Web.Tests.TestData
             builder.RegisterType<JournalTestData>().AsSelf().As<ITestData<Journal>>();
             builder.RegisterType<SubscriptionTestData>().AsSelf().As<ITestData<Subscription>>();
             builder.RegisterType<StaticPagesTestData>().AsSelf().As<ITestData<object>>();
+            
 
             builder.Register(
                        c =>
                        {
                            var membershipRepository = Mock.Create<IStaticMembershipService>();
-                           var userMock = Mock.Create<MembershipUser>();
-
-                           userMock.Arrange(u => u.UserName).Returns("user1");
-                           userMock.Arrange(u => u.ProviderUserKey).Returns(1);
+                           var userMock = new UserProfile {UserId = 1, UserName = "user1"};
 
                            membershipRepository.Arrange(m => m.GetUser()).Returns(userMock);
                            membershipRepository.Arrange(m => m.GetUserProfile(Arg.Is(1))).Returns(

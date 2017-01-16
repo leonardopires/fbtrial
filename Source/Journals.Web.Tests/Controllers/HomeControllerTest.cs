@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Web.Mvc;
 using Autofac;
 using FluentAssertions;
-using FluentAssertions.Mvc;
 using Journals.Web.Controllers;
 using Journals.Web.Tests.Framework;
 using Journals.Web.Tests.TestData;
+using Microsoft.AspNetCore.Mvc;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -31,7 +30,9 @@ namespace Journals.Web.Tests.Controllers
             var controller = GetController();
             var result = controller.InvokeAction<ActionResult>(action);
 
-            result.Should().BeViewResult().WithDefaultViewName().WithViewData("Message", message);
+            var viewResult = result.Should().BeAssignableTo<ViewResult>().Which;
+            viewResult.ViewData.Should().Contain("Message", message);
+            viewResult.ViewName.Should().BeOneOf(null, string.Empty, action);
         }
 
         [Fact]

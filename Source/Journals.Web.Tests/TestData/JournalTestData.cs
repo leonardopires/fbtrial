@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Web;
-using System.Web.Security;
 using Journals.Model;
 using Journals.Repository;
 using Journals.Web.Tests.Framework;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
+using LP.Test.Framework.Core;
 
 namespace Journals.Web.Tests.TestData
 {
@@ -229,7 +229,7 @@ namespace Journals.Web.Tests.TestData
             int userId = 1,
             bool forceNullContent = false)
         {
-            var file = CreateHttpPostedFile(content, fileName, contentType);
+            //var file = CreateHttpPostedFile(content, fileName, contentType);
 
             var journalViewModel = new JournalViewModel
             {
@@ -240,7 +240,7 @@ namespace Journals.Web.Tests.TestData
                 Content = content ?? (forceNullContent ? null : new byte[1]),
                 Title = title,
                 UserId = userId,
-                File = file
+                //File = file
             };
             return journalViewModel;
         }
@@ -255,7 +255,7 @@ namespace Journals.Web.Tests.TestData
             int userId = 1,
             bool forceNullContent = false)
         {
-            var file = CreateHttpPostedFile(content, fileName, contentType);
+            //var file = CreateHttpPostedFile(content, fileName, contentType);
 
             var journalViewModel = new JournalUpdateViewModel
             {
@@ -266,21 +266,21 @@ namespace Journals.Web.Tests.TestData
                 Content = content ?? (forceNullContent ? null : new byte[1]),
                 Title = title,
                 UserId = userId,
-                File = file
+                //File = file
             };
             return journalViewModel;
         }
 
-        public HttpPostedFileBase CreateHttpPostedFile(byte[] content, string fileName, string contentType)
-        {
-            var file = Mock.Create<HttpPostedFileBase>();
+        //public HttpPostedFileBase CreateHttpPostedFile(byte[] content, string fileName, string contentType)
+        //{
+        //    var file = Mock.Create<HttpPostedFileBase>();
 
-            file.Arrange(f => f.InputStream).Returns(content != null ? new MemoryStream(content) : Stream.Null);
-            file.Arrange(f => f.FileName).Returns(fileName);
-            file.Arrange(f => f.ContentType).Returns(contentType);
-            file.Arrange(f => f.ContentLength).Returns(content?.Length ?? -1);
-            return file;
-        }
+        //    file.Arrange(f => f.InputStream).Returns(content != null ? new MemoryStream(content) : Stream.Null);
+        //    file.Arrange(f => f.FileName).Returns(fileName);
+        //    file.Arrange(f => f.ContentType).Returns(contentType);
+        //    file.Arrange(f => f.ContentLength).Returns(content?.Length ?? -1);
+        //    return file;
+        //}
 
         public Journal CreateJournal(
             int id = 1,

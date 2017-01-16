@@ -6,19 +6,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Web.Http;
-using System.Web.Http.Controllers;
-using System.Web.Mvc;
 using Autofac;
 using FluentAssertions;
-using FluentAssertions.Mvc;
 using Journals.Web.Tests.Framework;
 using Journals.Web.Tests.TestData;
-using Microsoft.Data.OData.Query.SemanticAst;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
-using Xunit.Ioc.Autofac;
 
 namespace Journals.Web.Tests.Controllers
 {
@@ -60,11 +55,11 @@ namespace Journals.Web.Tests.Controllers
             var expected = Mapper.Map<List<Journal>, List<JournalViewModel>>(DefaultData);
 
             var result = controller.Index();
-            
-            var model = result.Should()
-                  .BeViewResult()
-                  .WithViewName("Index")
-                  .ModelAs<List<JournalViewModel>>();
+
+            var viewResult = result.Should().BeAssignableTo<ViewResult>().Which;
+            viewResult.ViewName.Should().Be(nameof(controller.Index));
+
+            var model = viewResult.Model.As<List<JournalViewModel>>();
 
 
             model.Should()
@@ -85,7 +80,8 @@ namespace Journals.Web.Tests.Controllers
 
             var result = controller.Create();
 
-            result.Should().BeViewResult().WithViewName("Create");
+            var viewResult = result.Should().BeAssignableTo<ViewResult>().Which;
+            viewResult.ViewName.Should().Be(nameof(controller.Create));
         }
 
         [Theory]
@@ -106,7 +102,7 @@ namespace Journals.Web.Tests.Controllers
             var controller = GetController();
             var result = controller.GetFile(fileId);
 
-            result.Should().BeAssignableTo<HttpStatusCodeResult>().Which.StatusCode.Should().Be((int)httpStatus);
+            result.Should().BeAssignableTo<StatusCodeResult>().Which.StatusCode.Should().Be((int)httpStatus);
         }
 
         [Theory]
@@ -118,17 +114,20 @@ namespace Journals.Web.Tests.Controllers
             controller.ValidateModel(journal);
             var result = controller.Create(journal);
 
+            Logger.Debug("{@journal}", journal);
 
             if (statusCode != HttpStatusCode.OK)
             {
                 controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid: {0}", controller.ModelState.Dump());
-                result.Should().BeAssignableTo<HttpStatusCodeResult>().Which.StatusCode.Should().Be((int) statusCode, "the error should have happened in the repository");
+                result.Should().BeAssignableTo<StatusCodeResult>().Which.StatusCode.Should().Be((int)statusCode, "the error should have happened in the repository");
             }
             else
             {
                 controller.ModelState.IsValid.Should().BeFalse("ModelState should be invalid: {0}", controller.ModelState.Dump());
-                result.Should().NotBeOfType<HttpStatusCodeResult>("validation errors should be identified by ModelState");
-                result.Should().BeViewResult("validation errors should appear to the user").WithViewName("Create");
+                result.Should().NotBeOfType<StatusCodeResult>("validation errors should be identified by ModelState");
+
+                var viewResult = result.Should().BeAssignableTo<ViewResult>("validation errors should appear to the user").Which;
+                viewResult.ViewName.Should().Be(nameof(controller.Create));
             }
         }
 
@@ -142,7 +141,11 @@ namespace Journals.Web.Tests.Controllers
             var result = controller.Create(journal);
 
             controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid: {0}", controller.ModelState.Dump());
-            result.Should().BeRedirectToRouteResult().WithAction("Index");
+
+            result.Should()
+                  .BeAssignableTo<RedirectToActionResult>()
+                  .Which.ActionName.Should()
+                  .Be(nameof(controller.Index));
         }
 
 
@@ -155,10 +158,12 @@ namespace Journals.Web.Tests.Controllers
 
             var result = controller.Delete(id);
 
-            result.Should()
-                    .BeViewResult("the confirmation page should appear")
-                    .WithViewName("Delete")
-                    .Model.Should()
+            var viewResult = result.Should()
+                                   .BeAssignableTo<ViewResult>("the confirmation page should appear").Which;
+
+            viewResult.ViewName.Should().Be(nameof(controller.Delete));
+
+            viewResult.Model.Should()
                     .NotBeNull()
                     .And.BeAssignableTo<JournalViewModel>();
         }
@@ -172,7 +177,7 @@ namespace Journals.Web.Tests.Controllers
             var result = controller.Delete(id);
 
             result.Should()
-                  .BeAssignableTo<HttpStatusCodeResult>()
+                  .BeAssignableTo<StatusCodeResult>()
                   .Which.StatusCode.Should().Be((int)statusCode);
         }
 
@@ -195,7 +200,7 @@ namespace Journals.Web.Tests.Controllers
 
             var result = controller.Delete(viewModel);
 
-            result.Should().BeRedirectToRouteResult().WithAction("Index");
+            result.Should().BeAssignableTo<RedirectToActionResult>().Which.ActionName.Should().Be(nameof(controller.Index));
 
             items = journalRepository.GetAllJournals(journal.UserId);
             items.Should().HaveCount(c => c < count, "count should be less than {0}", count);
@@ -216,7 +221,7 @@ namespace Journals.Web.Tests.Controllers
             var result = controller.Delete(viewModel);
 
             result.Should()
-                  .BeAssignableTo<HttpStatusCodeResult>()
+                  .BeAssignableTo<StatusCodeResult>()
                   .Which.StatusCode.Should().Be(404);
 
             journalRepository.GetAllJournals(viewModel.UserId).Should().HaveCount(count);
@@ -232,10 +237,11 @@ namespace Journals.Web.Tests.Controllers
 
             var result = controller.Edit(id);
 
-            result.Should()
-                    .BeViewResult("the edit page should appear")
-                    .WithViewName("Edit")
-                    .Model.Should()
+            var viewResult = result.Should().BeAssignableTo<ViewResult>("the edit page should appear").Which;
+
+            viewResult.ViewName.Should().Be(nameof(controller.Edit));
+
+            viewResult.Model.Should()
                     .NotBeNull()
                     .And.BeAssignableTo<JournalUpdateViewModel>();
         }
@@ -250,7 +256,7 @@ namespace Journals.Web.Tests.Controllers
             var result = controller.Edit(id);
 
             result.Should()
-                  .BeAssignableTo<HttpStatusCodeResult>()
+                  .BeAssignableTo<StatusCodeResult>()
                   .Which.StatusCode.Should().Be((int)statusCode);
         }
 
@@ -278,7 +284,7 @@ namespace Journals.Web.Tests.Controllers
 
             edited.ShouldBeEquivalentTo(viewModel);
 
-            result.Should().BeRedirectToRouteResult().WithAction("Index");
+            result.Should().BeAssignableTo<RedirectToActionResult>().Which.ActionName.Should().Be(nameof(controller.Index));
         }
 
 
@@ -311,17 +317,18 @@ namespace Journals.Web.Tests.Controllers
                 edited.ShouldBeEquivalentTo(originalViewModel);
 
 
-                result.Should().BeViewResult("validation error should appear to the user")
-                      .WithViewName("Edit")
-                      .Model.Should().Be(viewModel);
+                var viewResult = result.Should().BeAssignableTo<ViewResult>("validation error should appear to the user").Which;
+
+                viewResult.ViewName.Should().Be(nameof(controller.Edit));
+                viewResult.Model.Should().Be(viewModel);
 
             }
             else
             {
                 result.Should()
-                      .BeAssignableTo<HttpStatusCodeResult>()
+                      .BeAssignableTo<StatusCodeResult>()
                       .Which.StatusCode.Should()
-                      .Be((int) expectedStatusCode);
+                      .Be((int)expectedStatusCode);
             }
 
         }

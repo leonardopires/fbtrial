@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Mvc;
 using AutoMapper;
 using Journals.Model;
 using Journals.Repository;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Journals.Web.Controllers
 {
@@ -58,7 +59,7 @@ namespace Journals.Web.Controllers
 
         private int GetUserId()
         {
-            return (int) (membership?.GetUser()?.ProviderUserKey ?? -1);
+            return (int) (membership?.GetUser()?.UserId ?? -1);
         }
 
         public ActionResult Subscribe(int Id)
@@ -79,7 +80,7 @@ namespace Journals.Web.Controllers
 
             if (!opStatus.Status)
             {
-                result = HttpNotFound();
+                result = NotFound();
             }
             else
             {

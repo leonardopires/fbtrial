@@ -1,33 +1,38 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Threading.Tasks;
+using AutoMapper;
 using Journals.Model;
 using Journals.Repository;
-using Journals.Web.Filters;
-using Journals.Web.Helpers;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Web.Mvc;
-using Newtonsoft.Json;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Journals.Web.Controllers
 {
-    [AuthorizeRedirect(Roles = "Publisher")]
+    [Authorize]
     public class PublisherController : Controller
     {
-        private IJournalRepository _journalRepository;
-        private IStaticMembershipService _membershipService;
 
-        public PublisherController(IJournalRepository journalRepo, IStaticMembershipService membershipService)
+        private readonly IJournalRepository _journalRepository;
+        private readonly IStaticMembershipService _membershipService;
+        private readonly ILogger log;
+
+        public PublisherController(IJournalRepository journalRepo, IStaticMembershipService membershipService, ILogger log)
         {
             _journalRepository = journalRepo;
             _membershipService = membershipService;
+            this.log = log;
         }
 
         public ActionResult Index()
         {
-            var userId = (int)_membershipService.GetUser().ProviderUserKey;
+            var userId = _membershipService.GetUser().UserId;
 
-            List<Journal> allJournals = _journalRepository.GetAllJournals(userId);
+            var allJournals = _journalRepository.GetAllJournals(userId);
             var journals = Mapper.Map<List<Journal>, List<JournalViewModel>>(allJournals);
             return View(nameof(Index), journals);
         }
@@ -39,13 +44,31 @@ namespace Journals.Web.Controllers
 
         public ActionResult GetFile(int Id)
         {
-            Journal j = _journalRepository.GetJournalById(Id);
+            var j = _journalRepository.GetJournalById(Id);
 
             if (j == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
             return File(j.Content, j.ContentType);
+        }
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> PostUpload(IEnumerable<IFormFile> files)
+        {
+            foreach (var file in files)
+            {
+                using (var stream = file.OpenReadStream())
+                {
+                    using (var fileStream = System.IO.File.OpenWrite(file.Name))
+                    {
+                        await stream.CopyToAsync(fileStream);
+
+                        return Ok(new OperationStatus() {Status = true});
+                    }
+                }
+            }
+            return NoContent();
         }
 
         [HttpPost]
@@ -55,19 +78,19 @@ namespace Journals.Web.Controllers
             if (ModelState.IsValid)
             {
                 var newJournal = Mapper.Map<JournalViewModel, Journal>(journal);
-                JournalHelper.PopulateFile(journal.File, newJournal);
 
-                newJournal.UserId = (int)_membershipService.GetUser().ProviderUserKey;
+                //JournalHelper.PopulateFile(journal.File, newJournal);
+
+                newJournal.UserId = _membershipService.GetUser().UserId;
 
                 var opStatus = _journalRepository.AddJournal(newJournal);
                 if (!opStatus.Status)
                 {
-                    return new HttpStatusCodeResult(HttpStatusCode.InternalServerError);
+                    return StatusCode(500);
                 }
                 return RedirectToAction(nameof(Index));
             }
-            else
-                return View(nameof(Create), journal);
+            return View(nameof(Create), journal);
         }
 
         public ActionResult Delete(int Id)
@@ -77,14 +100,13 @@ namespace Journals.Web.Controllers
 
             if (selectedJournal != null)
             {
-
                 var journal = Mapper.Map<Journal, JournalViewModel>(selectedJournal);
 
                 result = View(nameof(Delete), journal);
             }
             else
             {
-                result = HttpNotFound();
+                result = NotFound();
             }
             return result;
         }
@@ -104,7 +126,7 @@ namespace Journals.Web.Controllers
             }
             else
             {
-                result = HttpNotFound();
+                result = NotFound();
             }
             return result;
         }
@@ -123,7 +145,7 @@ namespace Journals.Web.Controllers
             }
             else
             {
-                result = HttpNotFound();
+                result = NotFound();
             }
             return result;
         }
@@ -132,19 +154,19 @@ namespace Journals.Web.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(JournalUpdateViewModel journal)
         {
-
             ActionResult result;
 
             if (ModelState.IsValid)
             {
                 var selectedJournal = Mapper.Map<JournalUpdateViewModel, Journal>(journal);
-                JournalHelper.PopulateFile(journal.File, selectedJournal);
+
+                //JournalHelper.PopulateFile(journal.File, selectedJournal);
 
                 var opStatus = _journalRepository.UpdateJournal(selectedJournal);
 
                 if (!opStatus.Status)
                 {
-                    result = new HttpStatusCodeResult(HttpStatusCode.InternalServerError);
+                    result = StatusCode((int) HttpStatusCode.InternalServerError);
                 }
                 else
                 {
@@ -157,5 +179,6 @@ namespace Journals.Web.Controllers
             }
             return result;
         }
+
     }
 }

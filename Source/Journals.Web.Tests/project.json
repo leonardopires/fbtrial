@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0-*",
+
+  "dependencies": {
+    "Autofac": "4.2.1",
+    "Autofac.Extensions.DependencyInjection": "4.0.0",
+    "dotnet-test-xunit": "2.2.0-preview2-build1029",
+    "FluentAssertions": "4.18.0",
+    "Journals.Model": "1.0.0-*",
+    "Journals.Repository": "1.0.0-*",
+    "Journals.Web": "1.0.0-*",
+    "LP.Test.Framework": "1.0.0-*",
+    "NETStandard.Library": "1.6.1",
+    "NSubstitute": "2.0.1-rc",
+    "xunit.runner.visualstudio": "2.2.0-beta4-build1194"
+  },
+  "frameworks": {
+    "net451": {
+      "imports": [
+        "dotnet5.6",
+        "portable-net45+win8"
+      ],
+      "frameworkAssemblies": {
+        "System.Core": "4.0.0.0"
+      }
+    }
+  },
+  "testRunner": "xunit"
+  //"frameworks": {
+  //  "netstandard1.6": {
+  //    "imports": "dnxcore50"
+  //  }
+  //}
+}

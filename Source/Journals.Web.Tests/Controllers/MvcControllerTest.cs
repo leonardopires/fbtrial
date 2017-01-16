@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Routing;
 using Autofac;
 using Autofac.Core;
-using Autofac.Integration.Mvc;
 using FluentAssertions.Common;
 using Journals.Web.Tests.Framework;
-using Telerik.JustMock;
-using Telerik.JustMock.Helpers;
+using LP.Test.Framework.Core;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Xunit.Abstractions;
 
 namespace Journals.Web.Tests.Controllers
@@ -36,10 +34,11 @@ namespace Journals.Web.Tests.Controllers
         {
             var controller = Container.Resolve<TController>();
 
-            controller.ControllerContext = new ControllerContext(Container.Resolve<HttpContextBase>(new NamedParameter("httpMethod", httpMethod)), new RouteData(), controller);
-
-            var resolver = new AutofacDependencyResolver(Container.BeginLifetimeScope());
-            DependencyResolver.SetResolver(resolver);
+            //controller.ControllerContext = new ControllerContext(Container.Resolve<HttpContext>(new NamedParameter("httpMethod", httpMethod)), new RouteData(), controller);
+//            
+//
+//            var resolver = new AutofacDependencyResolver(Container.BeginLifetimeScope());
+//            DependencyResolver.SetResolver(resolver);
 
             return controller;
         }
@@ -50,26 +49,26 @@ namespace Journals.Web.Tests.Controllers
         /// <param name="builder">The builder.</param>
         protected override void InitializeContainer(ContainerBuilder builder)
         {
-            builder.Register(
-                       (c, p) =>
-                       {
-                           var mock = Mock.Create<HttpRequestBase>();
-                           mock.Arrange(r => r.HttpMethod).Returns(p.Named<string>("httpMethod"));
-                           return mock;
-                       }).As<HttpRequestBase>();
-
-            builder.Register(
-                       (c, p) =>
-                       {
-                           var mock = Mock.Create<HttpContextBase>();
-                           mock.Arrange(i => i.Request)
-                               .Returns(
-                                   c.Resolve<HttpRequestBase>(
-                                       new NamedParameter("httpMethod", p.Named<string>("httpMethod"))));
-                           return mock;
-                       })
-                .As<HttpContextBase>();                    
-               
+//            builder.Register(
+//                       (c, p) =>
+//                       {
+//                           var mock = Mock.Create<HttpRequestBase>();
+//                           mock.Arrange(r => r.HttpMethod).Returns(p.Named<string>("httpMethod"));
+//                           return mock;
+//                       }).As<HttpRequestBase>();
+//
+//            builder.Register(
+//                       (c, p) =>
+//                       {
+//                           var mock = Mock.Create<HttpContextBase>();
+//                           mock.Arrange(i => i.Request)
+//                               .Returns(
+//                                   c.Resolve<HttpRequestBase>(
+//                                       new NamedParameter("httpMethod", p.Named<string>("httpMethod"))));
+//                           return mock;
+//                       })
+//                .As<HttpContextBase>();                    
+//               
 
             builder.RegisterType<TController>();
         }
@@ -128,7 +127,7 @@ namespace Journals.Web.Tests.Controllers
 
             var type = Data.GetType();
 
-            var property = type.GetProperty(memberName, typeof(IEnumerable<object[]>));
+            var property = type.GetPropertyByName(memberName);
 
             if (property != null)
             {

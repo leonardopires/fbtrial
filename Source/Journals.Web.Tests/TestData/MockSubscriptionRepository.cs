@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Journals.Model;
 using Journals.Repository;
-using Journals.Web.Tests.Framework;
+using LP.Test.Framework.Core;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
 
