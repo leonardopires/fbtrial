@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Journals.Model;
@@ -9,39 +8,6 @@ using Telerik.JustMock.Helpers;
 
 namespace Journals.Web.Tests.TestData
 {
-    public abstract class MockRepositoryWrapper<TItem, TRepository> : IMockWrapper<TRepository>, ICollectionRepository<TItem>
-        where TRepository : IDisposable
-    {
-
-        protected TRepository mock;
-        protected List<TItem> models;
-
-        public MockRepositoryWrapper(ITestData<TItem> testData)
-        {
-            models = new List<TItem>(testData.GetDefaultData());
-
-            mock = Mock.Create<TRepository>();
-        }
-
-        public abstract void ArrangeMock();
-
-        public void Dispose()
-        {
-            mock.Dispose();
-        }
-
-        TRepository IMockWrapper<TRepository>.GetMock()
-        {
-            return mock;
-        }
-
-        ICollection<TItem> ICollectionRepository<TItem>.GetItems()
-        {
-            return models;
-        }
-
-    }
-
     public class MockJournalRepository : MockRepositoryWrapper<Journal, IJournalRepository>, IJournalRepository
     {
 
@@ -51,7 +17,7 @@ namespace Journals.Web.Tests.TestData
 
         public override void ArrangeMock()
         {
-            mock.Arrange(r => r.GetAllJournals(Arg.IsAny<int>())).Returns((int id) => models.Where(i => i.UserId == id).ToList());
+            mock.Arrange(r => r.GetAllJournals(Arg.IsAny<string>())).Returns((string id) => models.Where(i => i.UserId == id).ToList());
 
             mock.Arrange(r => r.GetJournalById(Arg.IsAny<int>())).Returns((int id) => models.FirstOrDefault(j => j.Id == id));
 
@@ -103,7 +69,7 @@ namespace Journals.Web.Tests.TestData
                     });
         }
 
-        public List<Journal> GetAllJournals(int userId)
+        public List<Journal> GetAllJournals(string userId)
         {
             return mock.GetAllJournals(userId);
         }

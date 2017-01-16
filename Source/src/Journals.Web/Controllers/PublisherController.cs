@@ -24,28 +24,32 @@ namespace Journals.Web.Controllers
 
         private ILogger Logger { get; }
 
-        public PublisherController(IJournalRepository journalRepo, IStaticMembershipService membershipService, ILogger<PublisherController> logger)
+        private IMapper Mapper { get; }
+
+
+        public PublisherController(IJournalRepository journalRepo, IStaticMembershipService membershipService, ILogger<PublisherController> logger, IMapper mapper)
         {
             _journalRepository = journalRepo;
             _membershipService = membershipService;
             Logger = logger;
+            Mapper = mapper;
         }
 
-        public ActionResult Index()
+        public IActionResult Index()
         {
-            var userId = _membershipService.GetUser().UserId;
+            var userId = _membershipService.GetUser().Id;
 
             var allJournals = _journalRepository.GetAllJournals(userId);
             var journals = Mapper.Map<List<Journal>, List<JournalViewModel>>(allJournals);
             return View(nameof(Index), journals);
         }
 
-        public ActionResult Create()
+        public IActionResult Create()
         {
             return View(nameof(Create));
         }
 
-        public ActionResult GetFile(int Id)
+        public IActionResult GetFile(int Id)
         {
             var j = _journalRepository.GetJournalById(Id);
 
@@ -90,7 +94,7 @@ namespace Journals.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(JournalViewModel journal)
+        public IActionResult Create(JournalViewModel journal)
         {
             if (ModelState.IsValid)
             {
@@ -98,7 +102,7 @@ namespace Journals.Web.Controllers
 
                 //JournalHelper.PopulateFile(journal.File, newJournal);
 
-                newJournal.UserId = _membershipService.GetUser().UserId;
+                newJournal.UserId = _membershipService.GetUser().Id;
 
                 var opStatus = _journalRepository.AddJournal(newJournal);
                 if (!opStatus.Status)
@@ -110,10 +114,10 @@ namespace Journals.Web.Controllers
             return View(nameof(Create), journal);
         }
 
-        public ActionResult Delete(int Id)
+        public IActionResult Delete(int journalId)
         {
-            ActionResult result;
-            var selectedJournal = _journalRepository.GetJournalById(Id);
+            IActionResult result;
+            var selectedJournal = _journalRepository.GetJournalById(journalId);
 
             if (selectedJournal != null)
             {
@@ -130,9 +134,9 @@ namespace Journals.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(JournalViewModel journal)
+        public IActionResult Delete(JournalViewModel journal)
         {
-            ActionResult result;
+            IActionResult result;
 
             var selectedJournal = Mapper.Map<JournalViewModel, Journal>(journal);
             var opStatus = _journalRepository.DeleteJournal(selectedJournal);
@@ -148,11 +152,11 @@ namespace Journals.Web.Controllers
             return result;
         }
 
-        public ActionResult Edit(int Id)
+        public IActionResult Edit(int journalId)
         {
-            ActionResult result;
+            IActionResult result;
 
-            var selectedJournal = _journalRepository.GetJournalById(Id);
+            var selectedJournal = _journalRepository.GetJournalById(journalId);
 
 
             if (selectedJournal != null)
@@ -169,9 +173,9 @@ namespace Journals.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(JournalUpdateViewModel journal)
+        public IActionResult Edit(JournalUpdateViewModel journal)
         {
-            ActionResult result;
+            IActionResult result;
 
             if (ModelState.IsValid)
             {

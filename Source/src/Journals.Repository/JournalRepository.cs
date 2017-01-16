@@ -15,7 +15,7 @@ namespace Journals.Repository
         {
         }
 
-        public List<Journal> GetAllJournals(int userId)
+        public List<Journal> GetAllJournals(string userId)
         {
             using (DataContext)
             {

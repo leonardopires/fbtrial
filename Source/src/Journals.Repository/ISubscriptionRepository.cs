@@ -8,12 +8,12 @@ namespace Journals.Repository
     {
         List<Journal> GetAllJournals();
 
-        OperationStatus AddSubscription(int journalId, int userId);
+        OperationStatus AddSubscription(int journalId, string userId);
 
-        List<Subscription> GetJournalsForSubscriber(int userId);
+        List<Subscription> GetJournalsForSubscriber(string userId);
 
-        OperationStatus UnSubscribe(int journalId, int userId);
+        OperationStatus UnSubscribe(int journalId, string userId);
 
-        List<Subscription> GetJournalsForSubscriber(string userName);
+        List<Subscription> GetJournalsForSubscriberByUserName(string userName);
     }
 }

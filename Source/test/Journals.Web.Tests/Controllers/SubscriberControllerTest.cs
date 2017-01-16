@@ -23,19 +23,31 @@ namespace Journals.Web.Tests.Controllers
 
         public SubscriberControllerTest(ITestOutputHelper output) : base(output)
         {
-            Mapper.Initialize(c =>
-            {
-                c.CreateMap<Journal, JournalViewModel>();
-                c.CreateMap<JournalViewModel, Journal>();
 
-                c.CreateMap<Journal, SubscriptionViewModel>();
-                c.CreateMap<SubscriptionViewModel, Journal>();
-            });
         }
 
         protected override void InitializeContainer(ContainerBuilder builder)
         {
             builder.RegisterModule<MocksModule>();
+
+            builder.Register(
+            r =>
+            {
+                MapperConfiguration config = new MapperConfiguration(
+                    c =>
+                    {
+                        c.CreateMap<Journal, JournalViewModel>();
+                        c.CreateMap<JournalViewModel, Journal>();
+
+                        c.CreateMap<Journal, JournalUpdateViewModel>();
+                        c.CreateMap<JournalUpdateViewModel, Journal>();
+
+                        c.CreateMap<Journal, SubscriptionViewModel>();
+                        c.CreateMap<SubscriptionViewModel, Journal>();
+                    });
+                return config.CreateMapper();
+            }).As<IMapper>();
+
             base.InitializeContainer(builder);
         }
 

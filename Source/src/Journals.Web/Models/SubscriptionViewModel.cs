@@ -14,7 +14,7 @@ namespace Journals.Model
 
         public string FileName { get; set; }
 
-        public int UserId { get; set; }
+        public string UserId { get; set; }
 
         public bool IsSubscribed { get; set; }
     }

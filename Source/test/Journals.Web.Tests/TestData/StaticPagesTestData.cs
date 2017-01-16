@@ -8,12 +8,12 @@ namespace Journals.Web.Tests.TestData
     public class StaticPagesTestData : TestData<object>
     {
         public IEnumerable<object[]> HomeControllerActions =>
-            new List<object[]>
-            {
-                new object[] { "Index", "Open Journal Publishers"},
-                new object[] { "About", "Your app description page."},
-                new object[] { "Contact", "Your contact page."}
-            };
+            Data(
+            
+                Item("Index", "Open Journal Publishers"),
+                Item("About", "Your app description page."),
+                Item("Contact", "Your contact page.")
+            );
 
 
     }

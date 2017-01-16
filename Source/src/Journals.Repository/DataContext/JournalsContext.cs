@@ -28,6 +28,6 @@ namespace Journals.Repository.DataContext
         {
             IsDisposed = true;
             base.Dispose(disposing);
-        }
+        }        
     }
 }

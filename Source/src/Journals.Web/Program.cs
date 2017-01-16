@@ -14,8 +14,8 @@ namespace Journals.Web
             var host = new WebHostBuilder()
                 .UseKestrel()
                 .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseIISIntegration()
-                .UseStartup<Startup>()                
+                .UseIISIntegration()                
+                .UseStartup<Startup>()     
                 .Build();
 
             host.Run();

@@ -49,7 +49,7 @@ namespace Journals.Repository
             return new List<Journal>();
         }
 
-        public List<Subscription> GetJournalsForSubscriber(int userId)
+        public List<Subscription> GetJournalsForSubscriber(string userId)
         {
             try
             {
@@ -68,7 +68,7 @@ namespace Journals.Repository
             return new List<Subscription>();
         }
 
-        public List<Subscription> GetJournalsForSubscriber(string userName)
+        public List<Subscription> GetJournalsForSubscriberByUserName(string userName)
         {
             try
             {
@@ -87,7 +87,7 @@ namespace Journals.Repository
             return new List<Subscription>();
         }
 
-        public OperationStatus AddSubscription(int journalId, int userId)
+        public OperationStatus AddSubscription(int journalId, string userId)
         {
             var opStatus = new OperationStatus { Status = true };
             try
@@ -109,7 +109,7 @@ namespace Journals.Repository
             return opStatus;
         }
 
-        public OperationStatus UnSubscribe(int journalId, int userId)
+        public OperationStatus UnSubscribe(int journalId, string userId)
         {
             var opStatus = new OperationStatus { Status = true };
             try

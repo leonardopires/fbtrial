@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using AutoMapper;
 using Journals.Model;
 using Journals.Repository;
@@ -14,28 +15,34 @@ namespace Journals.Web.Controllers
     {
 
         private readonly IStaticMembershipService membership;
+
         private IJournalRepository _journalRepository;
+
         private readonly ISubscriptionRepository _subscriptionRepository;
+
+        private IMapper Mapper { get; }
 
         public SubscriberController(
             IJournalRepository journalRepo,
             ISubscriptionRepository subscriptionRepo,
-            IStaticMembershipService membership)
+            IStaticMembershipService membership, 
+            IMapper mapper)
         {
             _journalRepository = journalRepo;
             _subscriptionRepository = subscriptionRepo;
             this.membership = membership;
+            Mapper = mapper;
         }
 
-        public ActionResult Index()
+        public IActionResult Index()
         {
-            ActionResult result;
+            IActionResult result;
             var journals = _subscriptionRepository.GetAllJournals();
 
             if (journals != null)
             {
                 var userId = GetUserId();
-                var subscriptions = _subscriptionRepository.GetJournalsForSubscriber(userId);
+                var subscriptions = _subscriptionRepository.GetJournalsForSubscriberByUserName(userId);
 
                 var subscriberModel = Mapper.Map<List<Journal>, List<SubscriptionViewModel>>(journals);
 
@@ -57,24 +64,24 @@ namespace Journals.Web.Controllers
             return result;
         }
 
-        private int GetUserId()
+        private string GetUserId()
         {
-            return (int) (membership?.GetUser()?.UserId ?? -1);
+            return membership.GetUser().Id;
         }
 
-        public ActionResult Subscribe(int Id)
+        public IActionResult Subscribe(int journalId)
         {
-            return RedirectOnSuccess(() => _subscriptionRepository.AddSubscription(Id, GetUserId()));
+            return RedirectOnSuccess(() => _subscriptionRepository.AddSubscription(journalId, GetUserId()));
         }
 
-        public ActionResult UnSubscribe(int Id)
+        public IActionResult UnSubscribe(int journalId)
         {
-            return RedirectOnSuccess(() => _subscriptionRepository.UnSubscribe(Id, GetUserId()));
+            return RedirectOnSuccess(() => _subscriptionRepository.UnSubscribe(journalId, GetUserId()));
         }
 
-        protected ActionResult RedirectOnSuccess(Func<OperationStatus> operation, string actionName = "Index")
+        protected IActionResult RedirectOnSuccess(Func<OperationStatus> operation, string actionName = "Index")
         {
-            ActionResult result;
+            IActionResult result;
 
             var opStatus = operation?.Invoke();
 

@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using System;
+using Autofac;
 using Journals.Model;
 using Journals.Repository;
 using Journals.Web.Tests.Framework;
@@ -27,12 +28,14 @@ namespace Journals.Web.Tests.TestData
             builder.Register(
                        c =>
                        {
+                           var testData = c.Resolve<JournalTestData>();
+
                            var membershipRepository = Mock.Create<IStaticMembershipService>();
-                           var userMock = new UserProfile {UserId = 1, UserName = "user1"};
+                           var userMock = new ApplicationUser { Id = testData.DefaultUserId, UserName = "user1"};
 
                            membershipRepository.Arrange(m => m.GetUser()).Returns(userMock);
-                           membershipRepository.Arrange(m => m.GetUserProfile(Arg.Is(1))).Returns(
-                                                   (int id) => new UserProfile() {UserId = id, UserName = "user1"});
+                           membershipRepository.Arrange(m => m.GetUser(Arg.Is(testData.DefaultUserId))).Returns(
+                                                   (string id) => new ApplicationUser() {Id = id, UserName = "user1"});
 
                            return membershipRepository;
 

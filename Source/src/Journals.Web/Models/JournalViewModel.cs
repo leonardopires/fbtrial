@@ -23,7 +23,7 @@ namespace Journals.Model
 //        [Required, ValidateFile]
 //        public HttpPostedFileBase File { get; set; }
 
-        public int UserId { get; set; }
+        public string UserId { get; set; }
 
         /// <summary>
         /// Indicates whether the current object is equal to another object of the same type.
@@ -64,12 +64,12 @@ namespace Journals.Model
             unchecked
             {
                 var hashCode = Id;
-                hashCode = (hashCode * 397) ^ (Title != null ? Title.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Description != null ? Description.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (FileName != null ? FileName.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (ContentType != null ? ContentType.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Content != null ? Content.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ UserId;
+                hashCode = (hashCode * 397) ^ (Title?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Description?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (FileName?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (ContentType?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Content?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (UserId?.GetHashCode() ?? 0);
                 return hashCode;
             }
         }

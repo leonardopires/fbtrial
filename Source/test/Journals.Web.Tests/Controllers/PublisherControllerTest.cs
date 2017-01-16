@@ -21,26 +21,35 @@ namespace Journals.Web.Tests.Controllers
 {
     public class PublisherControllerTest : MvcControllerTest<PublisherController, Journal, JournalTestData>
     {
+        private IMapper Mapper { get; }
 
         public PublisherControllerTest(ITestOutputHelper output) : base(output)
         {
-            Mapper.Initialize(c =>
-            {
-                c.CreateMap<Journal, JournalViewModel>();
-                c.CreateMap<JournalViewModel, Journal>();
-
-                c.CreateMap<Journal, JournalUpdateViewModel>();
-                c.CreateMap<JournalUpdateViewModel, Journal>();
-
-                c.CreateMap<Journal, SubscriptionViewModel>();
-                c.CreateMap<SubscriptionViewModel, Journal>();
-            });
-
+            Mapper = Container.Resolve<IMapper>();
         }
 
         protected override void InitializeContainer(ContainerBuilder builder)
         {
             builder.RegisterModule<MocksModule>();
+
+            builder.Register(
+                r =>
+                {
+                    MapperConfiguration config = new MapperConfiguration(
+                        c =>
+                        {
+                            c.CreateMap<Journal, JournalViewModel>();
+                            c.CreateMap<JournalViewModel, Journal>();
+
+                            c.CreateMap<Journal, JournalUpdateViewModel>();
+                            c.CreateMap<JournalUpdateViewModel, Journal>();
+
+                            c.CreateMap<Journal, SubscriptionViewModel>();
+                            c.CreateMap<SubscriptionViewModel, Journal>();
+                        });
+                    return config.CreateMapper();
+                }).As<IMapper>();
+
             base.InitializeContainer(builder);
         }
 

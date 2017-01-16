@@ -2,12 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Web;
 using Journals.Model;
-using Journals.Repository;
-using Journals.Web.Tests.Framework;
-using Telerik.JustMock;
-using Telerik.JustMock.Helpers;
 using LP.Test.Framework.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
@@ -18,216 +13,214 @@ namespace Journals.Web.Tests.TestData
     public class JournalTestData : TestData<Journal>
     {
 
-        public ILogger Logger { get; }
+        public const string GUID_ONE = "00000000-0000-0000-0000-000000000001";
+        public const string GUID_TWO = "00000000-0000-0000-0000-000000000002";
 
         public JournalTestData(ILogger logger)
         {
             Logger = logger;
         }
 
+        public ILogger Logger { get; }
+
+
+        public string DefaultUserId => GUID_ONE;
+
         public override List<Journal> GetDefaultData() => new List<Journal>
         {
             CreateJournal(),
             CreateJournal(2),
-            CreateJournal(3, userId: 2)
+            CreateJournal(3, userId: GUID_TWO)
         };
 
 
-        public IEnumerable<object[]> GetValidJournalViewModelsForCreate() => new List<object[]>
-        {
-            new object[]
-            {
-                CreateJournalViewModel(
-                    content: new byte[0],
-                    id: 3,
-                    description: "TestDesc3",
-                    fileName: "TestFilename3.pdf",
-                    contentType: "application/pdf",
-                    title: "Tester3",
-                    userId: 1
+        public IEnumerable<object[]> GetValidJournalViewModelsForCreate() => 
+            Data(
+                Item(
+                    CreateJournalViewModel(
+                        content: new byte[0],
+                        id: 3,
+                        description: "TestDesc3",
+                        fileName: "TestFilename3.pdf",
+                        contentType: "application/pdf",
+                        title: "Tester3",
+                        userId: GUID_ONE
+                    )
+                ),
+                Item(
+                    CreateJournalViewModel(
+                        content: new byte[0],
+                        id: 4,
+                        description: "TestDesc4",
+                        fileName: "TestFilename4.pdf",
+                        contentType: "application/pdf",
+                        title: "Tester4",
+                        userId: GUID_TWO
+                    )
                 )
-            },
-            new object[]
-            {
-                CreateJournalViewModel(
-                    content: new byte[0],
-                    id: 4,
-                    description: "TestDesc4",
-                    fileName: "TestFilename4.pdf",
-                    contentType: "application/pdf",
-                    title: "Tester4",
-                    userId: 2
+            );
+
+
+        public IEnumerable<object[]> GetInvalidJournalViewModels() =>
+            Data(
+
+                Item(new JournalViewModel(), HttpStatusCode.OK),
+                Item(
+                    CreateJournalViewModel(
+                        30,
+                        title: string.Empty
+                    ),
+                    HttpStatusCode.OK
+                ),
+                Item(
+                    CreateJournalViewModel(
+                        4,
+                        fileName: string.Empty
+                    ),
+                    HttpStatusCode.OK
+                ),
+                Item(
+                    CreateJournalViewModel(
+                        5,
+                        contentType: string.Empty
+                    ),
+                    HttpStatusCode.OK
+                ),
+                Item(
+                    CreateJournalViewModel(
+                        6,
+                        description: string.Empty
+                    ),
+                    HttpStatusCode.OK
+                ),
+                Item(
+                    CreateJournalViewModel(
+                        7,
+                        fileName: "TestFilename7.jpg"
+                    ),
+                    HttpStatusCode.OK
+                ),
+                Item(
+                    CreateJournalViewModel(
+                        8,
+                        new byte[1024 * 1024 * 4]
+                    ),
+                    HttpStatusCode.OK
+                ),
+                Item(
+                    CreateJournalViewModel(
+                        int.MaxValue
+                    ),
+                    HttpStatusCode.InternalServerError
                 )
-            }
-        };
-
-
-        public IEnumerable<object[]> GetInvalidJournalViewModels() => new List<object[]>
-        {
-            new object[] {new JournalViewModel(), HttpStatusCode.OK},
-            new object[]
-            {
-                CreateJournalViewModel(
-                    30,
-                    title: string.Empty
-                ),
-                HttpStatusCode.OK
-            },
-            new object[]
-            {
-                CreateJournalViewModel(
-                    4,
-                    fileName: string.Empty
-                ),
-                HttpStatusCode.OK
-            },
-            new object[]
-            {
-                CreateJournalViewModel(
-                    5,
-                    contentType: string.Empty
-                ),
-                HttpStatusCode.OK
-            },
-            new object[]
-            {
-                CreateJournalViewModel(
-                    6,
-                    description: string.Empty
-                ),
-                HttpStatusCode.OK
-            },
-            new object[]
-            {
-                CreateJournalViewModel(
-                    7,
-                    fileName: "TestFilename7.jpg"
-                ),
-                HttpStatusCode.OK
-            },
-            new object[]
-            {
-                CreateJournalViewModel(
-                    8,
-                    new byte[1024 * 1024 * 4]
-                ),
-                HttpStatusCode.OK
-            },
-            new object[]
-            {
-                CreateJournalViewModel(
-                    int.MaxValue
-                ),
-                HttpStatusCode.InternalServerError
-            }
-        };
+            );
 
 
         public IEnumerable<object[]> GetInvalidIdsAndExpectedStatusCodes() => new List<object[]>
         {
-            new object[] {-1, HttpStatusCode.NotFound},
-            new object[] {30, HttpStatusCode.NotFound},
-            new object[] {4, HttpStatusCode.NotFound},
-            new object[] {5, HttpStatusCode.NotFound},
-            new object[] {6, HttpStatusCode.NotFound},
-            new object[] {565, HttpStatusCode.NotFound},
-            new object[] {int.MaxValue, HttpStatusCode.NotFound},
-            new object[] {int.MinValue, HttpStatusCode.NotFound},
-            new object[] {-55, HttpStatusCode.NotFound},
-            new object[] {0, HttpStatusCode.NotFound},
-            new object[] {32, HttpStatusCode.NotFound}
+            Item(-1, HttpStatusCode.NotFound),
+            Item(30, HttpStatusCode.NotFound),
+            Item(4, HttpStatusCode.NotFound),
+            Item(5, HttpStatusCode.NotFound),
+            Item(6, HttpStatusCode.NotFound),
+            Item(565, HttpStatusCode.NotFound),
+            Item(int.MaxValue, HttpStatusCode.NotFound),
+            Item(int.MinValue, HttpStatusCode.NotFound),
+            Item(-55, HttpStatusCode.NotFound),
+            Item(0, HttpStatusCode.NotFound),
+            Item(32, HttpStatusCode.NotFound)
         };
 
-        public IEnumerable<object[]> GetValidUpdatedJournals() => new List<object[]>
-        {
-            new object[]
-            {
-                CreateJournalUpdateViewModel(
-                    content: new byte[1024 * 1024 * 3],
-                    id: 1,
-                    description: "DescriptionUpdated1",
-                    fileName: "TestFilenameUpdated1.pdf",
-                    contentType: "application/pdf",
-                    title: "TesterUpdated1",
-                    userId: 2
-                ), 2
-            },
-            new object[]
-            {
-                CreateJournalUpdateViewModel(
-                    1,
-                    description: "DescriptionUpdated1"
-                ), 2
-            },
-            new object[]
-            {
-                CreateJournalUpdateViewModel(
-                    1,
-                    fileName: "TestFilenameUpdated1.pdf"
-                ), 2
-            },
-            new object[]
-            {
-                CreateJournalUpdateViewModel(
-                    2,
-                    contentType: "application/octet-stream"
-                ), 2 
-            },
-            new object[]
-            {
-                CreateJournalUpdateViewModel(
-                    1,
-                    title: "TesterUpdated1"
-                ), 2
-            },
-            new object[]
-            {
-                CreateJournalUpdateViewModel(
-                    1,
-                    userId: 2
-                ), 2
-            }
-        };
+        public IEnumerable<object[]> GetValidUpdatedJournals() =>
+            Data(
+
+                Item(
+                    CreateJournalUpdateViewModel(
+                        content: new byte[1024 * 1024 * 3],
+                        id: 1,
+                        description: "DescriptionUpdated1",
+                        fileName: "TestFilenameUpdated1.pdf",
+                        contentType: "application/pdf",
+                        title: "TesterUpdated1",
+                        userId: GUID_TWO
+                    ),
+                    2
+                ),
+                Item(
+                    CreateJournalUpdateViewModel(
+                        1,
+                        description: "DescriptionUpdated1"
+                    ),
+                    2
+                ),
+                Item(
+                    CreateJournalUpdateViewModel(
+                        1,
+                        fileName: "TestFilenameUpdated1.pdf"
+                    ),
+                    2
+                ),
+                Item(
+                    CreateJournalUpdateViewModel(
+                        2,
+                        contentType: "application/octet-stream"
+                    ),
+                    2
+                ),
+                Item(
+                    CreateJournalUpdateViewModel(
+                        1,
+                        title: "TesterUpdated1"
+                    ),
+                    2
+                ),
+                Item(
+                    CreateJournalUpdateViewModel(
+                        1,
+                        userId: GUID_TWO
+                    ),
+                    2
+                )
+            );
 
 
-        public IEnumerable<object[]> GetInvalidUpdatedJournals() => new List<object[]>
-        {
-            new object[]
-            {
-                CreateJournalUpdateViewModel(
-                    fileName: string.Empty
+        public IEnumerable<object[]> GetInvalidUpdatedJournals() =>
+            Data(
+
+                Item(
+                    CreateJournalUpdateViewModel(
+                        fileName: string.Empty
+                    ),
+                    HttpStatusCode.OK
                 ),
-                HttpStatusCode.OK
-            },
-            new object[]
-            {
-                CreateJournalUpdateViewModel(
-                    description: string.Empty
-                ),
-                HttpStatusCode.OK
-            },
-            new object[]
-            {
-                CreateJournalUpdateViewModel(
-                    title: string.Empty
-                ),
-                HttpStatusCode.OK
-            },
-            new object[]
-            {
-                CreateJournalUpdateViewModel(
-                    content: new byte[1024 * 1024 * 4]
-                ),
-                HttpStatusCode.OK
-            },
-            new object[]
-            {
-                CreateJournalUpdateViewModel(
-                    int.MaxValue
-                ),
-                HttpStatusCode.InternalServerError
-            }
-        };
+                Item(
+                    CreateJournalUpdateViewModel(
+                        description: string.Empty
+                    ),
+                    HttpStatusCode.OK
+                )
+                ,
+                Item(
+                    CreateJournalUpdateViewModel(
+                        title: string.Empty
+                    ),
+                    HttpStatusCode.OK
+                )
+                ,
+                Item(
+                    CreateJournalUpdateViewModel(
+                        content: new byte[1024 * 1024 * 4]
+                    ),
+                    HttpStatusCode.OK
+                )
+                ,
+                Item(
+                    CreateJournalUpdateViewModel(
+                        int.MaxValue
+                    ),
+                    HttpStatusCode.InternalServerError
+                )
+            );
 
         public JournalViewModel CreateJournalViewModel(
             int id = 1,
@@ -236,7 +229,7 @@ namespace Journals.Web.Tests.TestData
             string fileName = "FileName.pdf",
             string contentType = "application/pdf",
             string title = "Title",
-            int userId = 1,
+            string userId = GUID_ONE,
             bool forceNullContent = false)
         {
             //var file = CreateHttpPostedFile(content, fileName, contentType);
@@ -249,7 +242,8 @@ namespace Journals.Web.Tests.TestData
                 ContentType = contentType,
                 Content = content ?? (forceNullContent ? null : new byte[1]),
                 Title = title,
-                UserId = userId,
+                UserId = userId
+
                 //File = file
             };
             return journalViewModel;
@@ -262,7 +256,7 @@ namespace Journals.Web.Tests.TestData
             string fileName = "FileName.pdf",
             string contentType = "application/pdf",
             string title = "Title",
-            int userId = 1,
+            string userId = GUID_ONE,
             bool forceNullContent = false)
         {
             //var file = CreateHttpPostedFile(content, fileName, contentType);
@@ -275,7 +269,8 @@ namespace Journals.Web.Tests.TestData
                 ContentType = contentType,
                 Content = content ?? (forceNullContent ? null : new byte[1]),
                 Title = title,
-                UserId = userId,
+                UserId = userId
+
                 //File = file
             };
             return journalViewModel;
@@ -299,7 +294,7 @@ namespace Journals.Web.Tests.TestData
             string fileName = "FileName.pdf",
             string contentType = "application/pdf",
             string title = "Title",
-            int userId = 1,
+            string userId = GUID_ONE,
             DateTime? modifiedDate = null,
             bool forceNullContent = false)
         {
@@ -319,14 +314,14 @@ namespace Journals.Web.Tests.TestData
 
 
         /// <summary>
-        /// Gets the files to upload.
+        ///     Gets the files to upload.
         /// </summary>
         /// <returns>
-        ///   <see cref="IEnumerable{object[]}" />
+        ///     <see cref="IEnumerable{object[]}" />
         /// </returns>
         public IEnumerable<object[]> GetFilesToUpload()
         {
-            return Data(            
+            return Data(
                 Item(CreateFormFileFromLocalFile("1/09628d25-ea42-490e-965d-cd4ffb6d4e9d.pdf")),
                 Item(CreateFormFileFromLocalFile("1/8305d848-88d2-4cbd-a33b-5c3dcc548056.pdf")),
                 Item(CreateFormFileFromLocalFile("2/75f29692-237b-4116-95ed-645de5c57b4d.pdf"))
@@ -334,7 +329,7 @@ namespace Journals.Web.Tests.TestData
         }
 
         private IFormFile CreateFormFileFromLocalFile(string fileName)
-        {        
+        {
             var file = new FileInfo(Path.Combine(Environment.CurrentDirectory, "Testfiles", fileName));
 
             Logger.Debug("{@file}", file);
@@ -347,7 +342,7 @@ namespace Journals.Web.Tests.TestData
             }
 
             IFormFile formFile = new FormFile(baseStream, 0, baseStream.Length, file.Name, file.Name);
-                return formFile;
+            return formFile;
         }
 
     }

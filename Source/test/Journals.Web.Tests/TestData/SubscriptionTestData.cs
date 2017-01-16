@@ -36,36 +36,38 @@ namespace Journals.Web.Tests.TestData
                     Id = 1,
                     Journal = journalRepository.GetJournalById(1),
                     JournalId = 1,
-                    UserId = 1,
-                    User = membershipRepository.GetUserProfile(1)                
+                    UserId = JournalTestData.GUID_ONE,
+                    User = membershipRepository.GetUser(JournalTestData.GUID_ONE)
                 },
                 new Subscription
                 {
                     Id = 2,
                     Journal = journalRepository.GetJournalById(2),
                     JournalId = 2,
-                    UserId = 1,
-                    User = membershipRepository.GetUserProfile(1)
+                    UserId = JournalTestData.GUID_ONE,
+                    User = membershipRepository.GetUser(JournalTestData.GUID_ONE)
                 }
             };
         }
 
 
-        public IEnumerable<object[]> SubscribeValidData => new List<object[]>()
-        {
-            new object[] {1},
-            new object[] {2}
-        };
+        public IEnumerable<object[]> SubscribeValidData =>
+            Data(
+                Item(1),
+                Item(2)
+            );
 
-        public IEnumerable<object[]> SubscribeInvalidData => new List<object[]>()
-        {
-            new object[] {-1, HttpStatusCode.NotFound},
-            new object[] {3, HttpStatusCode.NotFound},
-            new object[] {int.MaxValue, HttpStatusCode.NotFound},
-            new object[] {int.MinValue, HttpStatusCode.NotFound},
-            new object[] {10, HttpStatusCode.NotFound},
-            new object[] {-10, HttpStatusCode.NotFound},
-            new object[] {-654, HttpStatusCode.NotFound},
-        };
+        public IEnumerable<object[]> SubscribeInvalidData =>
+            Data(
+
+                Item(-1, HttpStatusCode.NotFound),
+                Item(3, HttpStatusCode.NotFound),
+                Item(int.MaxValue, HttpStatusCode.NotFound),
+                Item(int.MinValue, HttpStatusCode.NotFound),
+                Item(10, HttpStatusCode.NotFound),
+                Item(-10, HttpStatusCode.NotFound),
+                Item(-654, HttpStatusCode.NotFound)
+            );
+
     }
 }

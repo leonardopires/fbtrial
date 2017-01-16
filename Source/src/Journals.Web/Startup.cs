@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using Journals.Model;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -12,6 +15,7 @@ using Microsoft.Extensions.Logging;
 using Journals.Web.Data;
 using Journals.Web.Models;
 using Journals.Web.Services;
+using Serilog;
 
 namespace Journals.Web
 {
@@ -24,6 +28,11 @@ namespace Journals.Web
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
 
+            Log.Logger = new LoggerConfiguration()
+              .Enrich.FromLogContext()
+              .WriteTo.LiterateConsole()
+              .CreateLogger();
+
             if (env.IsDevelopment())
             {
                 // For more details on using the user secret store see http://go.microsoft.com/fwlink/?LinkID=532709
@@ -34,10 +43,12 @@ namespace Journals.Web
             Configuration = builder.Build();
         }
 
+        public IContainer ApplicationContainer { get; set; }
+
         public IConfigurationRoot Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
             services.AddDbContext<ApplicationDbContext>(options =>
@@ -49,16 +60,24 @@ namespace Journals.Web
 
             services.AddMvc();
 
-            // Add application services.
-            services.AddTransient<IEmailSender, AuthMessageSender>();
-            services.AddTransient<ISmsSender, AuthMessageSender>();
+            var builder = new ContainerBuilder();
+
+            builder.RegisterModule<JournalsWebModule>();
+
+            builder.Populate(services);            
+
+
+            this.ApplicationContainer = builder.Build();
+
+            return new AutofacServiceProvider(this.ApplicationContainer);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IApplicationLifetime appLifetime)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
+            loggerFactory.AddSerilog();
+
+            appLifetime.ApplicationStopped.Register(Log.CloseAndFlush);
 
             if (env.IsDevelopment())
             {

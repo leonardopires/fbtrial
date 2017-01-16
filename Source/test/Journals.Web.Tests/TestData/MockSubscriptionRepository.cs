@@ -27,18 +27,18 @@ namespace Journals.Web.Tests.TestData
         {
             mock.Arrange((r) => r.GetAllJournals()).Returns(models.Select(m => m.Journal).ToList());
 
-            mock.Arrange((r) => r.GetJournalsForSubscriber(Arg.IsAny<int>())).Returns(
-                    (int id) =>
+            mock.Arrange((r) => r.GetJournalsForSubscriber(Arg.IsAny<string>())).Returns(
+                    (string id) =>
                     {
                         var subscriptions = models.Where(i => i.UserId == id).ToList();
                         return subscriptions;
                     });
 
-            mock.Arrange(r => r.AddSubscription(Arg.IsAny<int>(), Arg.IsAny<int>())).Returns(
-                    (int journalId, int userId) =>
+            mock.Arrange(r => r.AddSubscription(Arg.IsAny<int>(), Arg.IsAny<string>())).Returns(
+                    (int journalId, string userId) =>
                     {
                         var journal = journalRepository.GetJournalById(journalId);
-                        var user = membershipRepository.GetUserProfile(userId);
+                        var user = membershipRepository.GetUser(userId);
 
                         if (user != null
                             && journal != null)
@@ -59,8 +59,8 @@ namespace Journals.Web.Tests.TestData
                         };
                     });
 
-            mock.Arrange(r => r.UnSubscribe(Arg.IsAny<int>(), Arg.IsAny<int>())).Returns(
-                    (int id, int userId) =>
+            mock.Arrange(r => r.UnSubscribe(Arg.IsAny<int>(), Arg.IsAny<string>())).Returns(
+                    (int id, string userId) =>
                     {
                         var index = models.FindIndex(i => i.Id == id && i.UserId == userId);
                         if (index >= 0)
@@ -74,7 +74,7 @@ namespace Journals.Web.Tests.TestData
                     });
 
 
-            mock.Arrange((r) => r.GetJournalsForSubscriber(Arg.IsAny<string>())).Returns(
+            mock.Arrange((r) => r.GetJournalsForSubscriberByUserName(Arg.IsAny<string>())).Returns(
                     (string username) =>
                     {
                         var subscriptions = models.Where(i => i.User?.UserName == username).ToList();
@@ -88,22 +88,22 @@ namespace Journals.Web.Tests.TestData
             return mock.GetAllJournals();
         }
 
-        public OperationStatus AddSubscription(int journalId, int userId)
+        public OperationStatus AddSubscription(int journalId, string userId)
         {
             return mock.AddSubscription(journalId, userId);
         }
 
-        public List<Subscription> GetJournalsForSubscriber(int userId)
+        public List<Subscription> GetJournalsForSubscriber(string userId)
         {
             return mock.GetJournalsForSubscriber(userId);
         }
 
-        public OperationStatus UnSubscribe(int journalId, int userId)
+        public OperationStatus UnSubscribe(int journalId, string userId)
         {
             return mock.UnSubscribe(journalId, userId);
         }
 
-        public List<Subscription> GetJournalsForSubscriber(string userName)
+        public List<Subscription> GetJournalsForSubscriberByUserName(string userName)
         {
             return mock.GetJournalsForSubscriber(userName);
         }

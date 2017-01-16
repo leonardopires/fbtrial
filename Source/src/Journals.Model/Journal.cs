@@ -23,8 +23,8 @@ namespace Journals.Model
         public DateTime ModifiedDate { get; set; }
 
         [ForeignKey("UserId")]
-        public UserProfile User { get; set; }
+        public ApplicationUser User { get; set; }
 
-        public int UserId { get; set; }
+        public string UserId { get; set; }
     }
 }

@@ -6,7 +6,7 @@ namespace Journals.Repository
 {
     public interface IJournalRepository : IDisposable
     {
-        List<Journal> GetAllJournals(int userId);
+        List<Journal> GetAllJournals(string userId);
 
         OperationStatus AddJournal(Journal newJournal);
 
