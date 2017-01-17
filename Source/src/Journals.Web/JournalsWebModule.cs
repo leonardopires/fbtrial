@@ -8,6 +8,9 @@ using Journals.Repository.DataContext;
 using Journals.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 
 namespace Journals.Web
@@ -45,20 +48,29 @@ namespace Journals.Web
 
 
 
+            builder.Register(
+                       c => new DbContextOptionsBuilder<JournalsContext>()
+                             .UseSqlServer(
+                                 c.Resolve<IConfigurationRoot>()
+                                  .GetConnectionString("DefaultConnection")).Options)
+                   .As<DbContextOptions<JournalsContext>>();
+
+
             builder.RegisterType<JournalRepository>().As<IJournalRepository>();
             builder.RegisterType<SubscriptionRepository>().As<ISubscriptionRepository>();
 
             builder.RegisterType<StaticMembershipService>().As<IStaticMembershipService>();
 
-            //builder.RegisterType<JournalsContext>().AsSelf();
+            builder.RegisterType<JournalsContext>().AsSelf().InstancePerDependency();
 
             builder.Register(c => Log.Logger).As<Serilog.ILogger>();
+             
 
-            builder.RegisterType<ApplicationDbContext>()
-                   .AsSelf()
-                   .As<IdentityDbContext<ApplicationUser, ApplicationRole, string>>()
-                   .InstancePerLifetimeScope();
-            ;
+//            builder.RegisterType<ApplicationDbContext>()
+//                   .AsSelf()
+//                   .As<IdentityDbContext<ApplicationUser, ApplicationRole, string>>()
+//                   .InstancePerLifetimeScope();
+//            ;
 
             var seeders = AppDomain.CurrentDomain.GetAssemblies()
                                       .SelectMany(a => a.GetTypes())

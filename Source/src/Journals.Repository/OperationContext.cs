@@ -8,9 +8,11 @@ namespace Journals.Repository
         where TDataContext : DbContext, IDisposedTracker
     {
 
+        private readonly Func<TDataContext> contextFactory;
+
         private readonly TDataContext dataContext;
 
-        public TDataContext Data => (dataContext != null && !dataContext.IsDisposed) ? dataContext : null;
+        public TDataContext Data => (dataContext != null && !dataContext.IsDisposed) ? dataContext : contextFactory();
 
         public OperationStatus Result { get; set;  } = new OperationStatus();
 
@@ -18,6 +20,7 @@ namespace Journals.Repository
 
         public OperationContext(Func<TDataContext> contextFactory)
         {
+            this.contextFactory = contextFactory;
             if (contextFactory == null)
             {
                 throw new ArgumentNullException(nameof(contextFactory));
@@ -28,6 +31,7 @@ namespace Journals.Repository
 
         public void Dispose()
         {
+            dataContext.Dispose();
         }
 
     }

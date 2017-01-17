@@ -56,10 +56,6 @@ namespace Journals.Web
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
 
-            services.AddDbContext<JournalsContext>(
-                options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"))
-                );
-
             services.AddIdentity<ApplicationUser, ApplicationRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders()                                

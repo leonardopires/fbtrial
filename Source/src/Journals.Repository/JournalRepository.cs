@@ -58,14 +58,17 @@ namespace Journals.Repository
 
                     foreach (var subscription in subscriptions)
                     {
-                        context.Data.Entry(subscription).State = EntityState.Deleted;
                         context.Data.Subscriptions.Remove(subscription);
+                        context.Data.Entry(subscription).State = EntityState.Deleted;
                     }
 
                     var journalToBeDeleted = Get<Journal>(j => j.Id == journal.Id);
 
-                    context.Data.Entry(journalToBeDeleted).State = EntityState.Deleted;
-                    context.Data.Journals.Remove(journalToBeDeleted);
+                    if (journalToBeDeleted != null)
+                    {
+                        context.Data.Journals.Remove(journalToBeDeleted);
+                        context.Data.Entry(journalToBeDeleted).State = EntityState.Deleted;
+                    }
                 },
                 Save
              );
