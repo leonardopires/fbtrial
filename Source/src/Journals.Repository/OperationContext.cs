@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Data.Entity;
 using Journals.Model;
+using Microsoft.EntityFrameworkCore;
 
 namespace Journals.Repository
 {
@@ -12,7 +12,7 @@ namespace Journals.Repository
 
         public TDataContext Data => (dataContext != null && !dataContext.IsDisposed) ? dataContext : null;
 
-        public OperationStatus Result { get; } = new OperationStatus();
+        public OperationStatus Result { get; set;  } = new OperationStatus();
 
         
 
@@ -24,16 +24,10 @@ namespace Journals.Repository
             }
 
             dataContext = contextFactory();
-
-            dataContext.Configuration.ProxyCreationEnabled = true;
         }
 
         public void Dispose()
         {
-            if (dataContext != null && !dataContext.IsDisposed)
-            {
-                dataContext.Dispose();
-            }
         }
 
     }

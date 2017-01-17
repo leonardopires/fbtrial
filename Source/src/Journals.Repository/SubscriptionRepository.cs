@@ -1,41 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 using Journals.Model;
 using Journals.Repository.DataContext;
+using Microsoft.EntityFrameworkCore;
 
 namespace Journals.Repository
 {
     public class SubscriptionRepository : RepositoryBase<JournalsContext>, ISubscriptionRepository
     {
 
-        public SubscriptionRepository(Func<JournalsContext> contextFactory) : base(contextFactory)
+        private readonly IStaticMembershipService membership;
+
+        public SubscriptionRepository(Func<JournalsContext> contextFactory, IStaticMembershipService membership) : base(contextFactory)
         {
+            this.membership = membership;
         }
 
         public List<Journal> GetAllJournals()
         {
-            using (DataContext)
-            {
-                return Table<Subscription>().Include("Subscription").Select(s => s.Journal).Where(j => j.Title != null)?.ToList();
-            }
+            return Table<Journal>().OrderByDescending(t => t.CreatedDate).ToList();
         }
 
         public List<Subscription> GetJournalsForSubscriber(string userId)
         {
-            using (DataContext)
-            {                
-                return Table<Subscription>().Include("Journal").Where(u => u.UserId == userId)?.ToList();
-            }
+            return Table<Subscription>().Include(s => s.Journal).Where(u => u.UserId == userId)?.ToList();
         }
 
         public List<Subscription> GetJournalsForSubscriberByUserName(string userName)
         {
-            using (DataContext)
-            {
-                return Table<Subscription>().Include("Journal").Where(u => u.User.UserName == userName)?.ToList();
-            }
+            var user = membership.GetUserByName(userName);
+            return GetJournalsForSubscriber(user.Id);
         }
 
         public OperationStatus AddSubscription(int journalId, string userId)
@@ -66,8 +61,14 @@ namespace Journals.Repository
                         context.Data.Subscriptions.Remove(subscription);
                     }
                 },
-                Save                
+                Save
             );
+        }
+
+        public override void Dispose()
+        {
+            membership.Dispose();
+            base.Dispose();
         }
 
     }

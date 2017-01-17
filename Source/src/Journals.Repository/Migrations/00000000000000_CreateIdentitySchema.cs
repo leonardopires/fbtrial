@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Journals.Web.Data.Migrations
+namespace Journals.Repository.Migrations
 {
     public partial class CreateIdentitySchema : Migration
     {

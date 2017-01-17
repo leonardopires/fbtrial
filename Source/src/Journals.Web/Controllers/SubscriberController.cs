@@ -66,14 +66,14 @@ namespace Journals.Web.Controllers
             return membership.GetUser()?.Id;
         }
 
-        public IActionResult Subscribe(int journalId)
+        public IActionResult Subscribe(int id)
         {
-            return RedirectOnSuccess(() => _subscriptionRepository.AddSubscription(journalId, GetUserId()));
+            return RedirectOnSuccess(() => _subscriptionRepository.AddSubscription(id, GetUserId()));
         }
 
-        public IActionResult UnSubscribe(int journalId)
+        public IActionResult UnSubscribe(int id)
         {
-            return RedirectOnSuccess(() => _subscriptionRepository.UnSubscribe(journalId, GetUserId()));
+            return RedirectOnSuccess(() => _subscriptionRepository.UnSubscribe(id, GetUserId()));
         }
 
         protected IActionResult RedirectOnSuccess(Func<OperationStatus> operation, string actionName = "Index")

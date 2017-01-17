@@ -1,9 +1,8 @@
 ﻿using Journals.Model;
 using System;
-using System.Data.Entity;
-using System.Data.Entity.Validation;
 using System.Linq;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Journals.Repository
 {
@@ -13,6 +12,8 @@ namespace Journals.Repository
         private readonly Func<TDataContext> contextFactory;
 
         private TDataContext _DataContext;
+
+        public bool ThrowExceptionOnError { get; set; } = true;
 
         public RepositoryBase(Func<TDataContext> contextFactory)
         {
@@ -26,22 +27,8 @@ namespace Journals.Repository
                 if (_DataContext == null || _DataContext.IsDisposed)
                 {
                     _DataContext = contextFactory();
-
-                    AllowSerialization = true;
                 }
                 return _DataContext;
-            }
-        }
-
-        protected virtual bool AllowSerialization
-        {
-            get
-            {
-                return _DataContext.Configuration.ProxyCreationEnabled;
-            }
-            set
-            {
-                _DataContext.Configuration.ProxyCreationEnabled = !value;
             }
         }
 
@@ -86,7 +73,7 @@ namespace Journals.Repository
             return Table<TEntity>();
         }
 
-        protected virtual IDbSet<TEntity> Table<TEntity>() where TEntity : class
+        protected virtual DbSet<TEntity> Table<TEntity>() where TEntity : class
         {
             return DataContext.Set<TEntity>();
         }
@@ -110,7 +97,13 @@ namespace Journals.Repository
                 }
                 catch (Exception e)
                 {
-                    OperationStatus.CreateFromException(e.Message, e);
+                    operationContext.Result = OperationStatus.CreateFromException(e.Message, e);
+
+                    if (ThrowExceptionOnError)
+                    {
+                        throw;
+                    }
+
                 }
                 return operationContext.Result;
             }
@@ -139,7 +132,6 @@ namespace Journals.Repository
             return (context) =>
                    {
                        Table<TEntity>().Add(entity);
-                       context.Data.Entry(entity).State = EntityState.Added;
                    };
         }
 
@@ -154,8 +146,24 @@ namespace Journals.Repository
             if (_DataContext != null && !_DataContext.IsDisposed)
             {
                 _DataContext.Dispose();
-                _DataContext.IsDisposed = true;
             }
         }
+    }
+
+    public class OperationException : Exception
+    {
+
+        public OperationStatus Status { get; }
+
+        public OperationException(OperationStatus status)
+        {
+            Status = status;
+        }
+
+        public override string ToString()
+        {
+            return Status.ToString();
+        }
+
     }
 }

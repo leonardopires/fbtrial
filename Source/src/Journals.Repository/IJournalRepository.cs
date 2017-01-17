@@ -1,6 +1,7 @@
 ﻿using System;
 using Journals.Model;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Journals.Repository
 {
@@ -29,5 +30,8 @@ namespace Journals.Repository
         OperationStatus DeleteIssue(Issue issue);
 
         OperationStatus UpdateIssue(Issue issue);
+
+        Task<int> GetJournalCount();
+
     }
 }

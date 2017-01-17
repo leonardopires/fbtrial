@@ -2,10 +2,9 @@
 using Journals.Repository.DataContext;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
-using System.Data.Entity.Validation;
-using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using File = Journals.Model.File;
 
@@ -21,20 +20,19 @@ namespace Journals.Repository
             this.logger = logger;
         }
 
+        public async Task<int> GetJournalCount()
+        {
+            return await Table<Journal>().CountAsync();
+        }
+
         public List<Journal> GetAllJournals(string userId)
         {
-            using (DataContext)
-            {
-                return DataContext.Journals.Where(j => j.Id > 0 && j.UserId == userId).ToList();
-            }
+            return GetMany<Journal>(j => j.Id > 0 && j.UserId == userId).ToList();
         }
 
         public Journal GetJournalById(int Id)
         {
-            using (DataContext)
-            {
-                return DataContext.Journals.SingleOrDefault(j => j.Id == Id);
-            }
+            return Get<Journal>(j => j.Id == Id);
         }
 
         public OperationStatus AddJournal(Journal newJournal)
@@ -45,8 +43,7 @@ namespace Journals.Repository
                     newJournal.ModifiedDate = DateTime.UtcNow;
                     newJournal.CreatedDate = DateTime.UtcNow;
 
-                    var j = context.Data.Journals.Add(newJournal);
-                    context.Data.Entry(j).State = EntityState.Added;
+                    context.Data.Journals.Add(newJournal);
                 },
                 Save
                 );
@@ -81,7 +78,7 @@ namespace Journals.Repository
             return ExecuteOperations(
                 context =>
                 {
-                    existingJournal = context.Data.Journals.Find(journal.Id);
+                    existingJournal = context.Data.Journals.FirstOrDefault(j => j.Id == journal.Id);
 
                     if (journal.Title != null)
                         existingJournal.Title = journal.Title;

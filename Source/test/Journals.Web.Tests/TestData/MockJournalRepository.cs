@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Journals.Model;
 using Journals.Repository;
 using LP.Test.Framework.Core;
@@ -110,6 +111,8 @@ namespace Journals.Web.Tests.TestData
                     return status;
                 });
 
+            mock.Arrange(m => m.GetJournalCount()).Returns(() => Task.FromResult(10));
+
         }
 
         public List<Journal> GetAllJournals(string userId)
@@ -170,6 +173,11 @@ namespace Journals.Web.Tests.TestData
         public OperationStatus UpdateIssue(Issue issue)
         {
             return mock.UpdateIssue(issue);
+        }
+
+        public async Task<int> GetJournalCount()
+        {
+            return await mock.GetJournalCount();
         }
 
     }

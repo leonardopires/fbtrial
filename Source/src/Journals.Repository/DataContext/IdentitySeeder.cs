@@ -1,97 +1,144 @@
 using System;
-using System.Data.Entity;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Journals.Model;
-using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.EntityFramework;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-
-using Compat = Microsoft.AspNet.Identity.CoreCompat;
-using Classic = Microsoft.AspNet.Identity;
 
 namespace Journals.Repository.DataContext
 {
-    public class IdentitySeeder :  IDbSeeder, IDatabaseInitializer<Compat.IdentityDbContext<ApplicationUser>>
+   
+    public class IdentitySeeder :  IDbSeeder
     {
 
-        private readonly Func<Compat.IdentityDbContext<ApplicationUser>> identityContextFactory;
         private readonly ILogger logger;
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly RoleManager<ApplicationRole> roleManager;
+        private readonly JournalsContext journalsContext;
+        private readonly IJournalRepository journalRepo;
 
         public IdentitySeeder(
-            Func<Compat.IdentityDbContext<ApplicationUser>> identityContextFactory,
-            ILogger<IdentitySeeder> logger)
+            ILogger<IdentitySeeder> logger,
+            UserManager<ApplicationUser> userManager,
+            RoleManager<ApplicationRole> roleManager,
+            JournalsContext journalsContext,
+            IJournalRepository journalRepo
+            )
         {
-            this.identityContextFactory = identityContextFactory;
+            this.userManager = userManager;
             this.logger = logger;
+            this.roleManager = roleManager;
+            this.journalsContext = journalsContext;
+            this.journalRepo = journalRepo;
         }
 
         public async Task Seed()
         {
+            await journalsContext.Database.EnsureCreatedAsync();
 
+            await SeedIdentity();
+            await SeedJournals();
+        }
+
+
+        private async Task SeedJournals()
+        {
+
+            var user = await userManager.FindByNameAsync("pappu");
+
+            if (await journalRepo.GetJournalCount() == 0)
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var result = journalRepo.AddJournal(
+                        new Journal()
+                        {
+                            Title = $"Journal {i}",
+                            Description = $"Description {i}",
+                            UserId = user.Id
+                        }
+
+                    );
+                    if (!result.Status)
+                    {
+                        logger.LogCritical(result.ToString());                        
+                    }
+                }
+            }
+        }
+
+        private async Task SeedIdentity()
+        {
             var publisher = "Publisher";
             var subscriber = "Subscriber";
-            var defaultPassword = "Passw0rd";
+            var defaultPassword = "Passw0rd!";
 
+            logger.LogInformation($">> Creating roles.");
 
-            logger.LogInformation(">> Creating roles");
-
-            await Task.WhenAll(
-                CreateRole(publisher),
-                CreateRole(subscriber)
-            );
+            await CreateRole(publisher);
+            await CreateRole(subscriber);
 
             logger.LogInformation(">> Creating users");
 
-            await Task.WhenAll(
-                CreateUser("pappu", defaultPassword, publisher),
-                CreateUser("pappy", defaultPassword, subscriber),
-                CreateUser("daniel", defaultPassword, publisher),
-                CreateUser("andrew", defaultPassword, subscriber),
-                CreateUser("serge", defaultPassword, subscriber),
-                CreateUser("harold", defaultPassword, publisher)
-            );
+            await CreateUser("pappu", defaultPassword, publisher);
+            await CreateUser("pappy", defaultPassword, subscriber);
+            await CreateUser("daniel", defaultPassword, publisher);
+            await CreateUser("andrew", defaultPassword, subscriber);
+            await CreateUser("serge", defaultPassword, subscriber);
+            await CreateUser("harold", defaultPassword, publisher);
 
             logger.LogInformation(">> Adding users to roles");
 
-            await Task.WhenAll(
-                AddUserToRole("pappu", publisher),
-                AddUserToRole("pappy", subscriber),
-                AddUserToRole("daniel", publisher),
-                AddUserToRole("andrew", subscriber),
-                AddUserToRole("serge", subscriber),
-                AddUserToRole("harold", publisher)
-            );
+            await AddUserToRole("pappu", publisher);
+            await AddUserToRole("pappy", subscriber);
+            await AddUserToRole("daniel", publisher);
+            await AddUserToRole("andrew", subscriber);
+            await AddUserToRole("serge", subscriber);
 
+            await AddUserToRole("harold", publisher);
+            await CreateRole(publisher);
+            await CreateRole(subscriber);
+
+            logger.LogInformation(">> Creating users");
+
+            await CreateUser("pappu", defaultPassword, publisher);
+            await CreateUser("pappy", defaultPassword, subscriber);
+            await CreateUser("daniel", defaultPassword, publisher);
+            await CreateUser("andrew", defaultPassword, subscriber);
+            await CreateUser("serge", defaultPassword, subscriber);
+            await CreateUser("harold", defaultPassword, publisher);
+
+            logger.LogInformation(">> Adding users to roles");
+
+            await AddUserToRole("pappu", publisher);
+            await AddUserToRole("pappy", subscriber);
+            await AddUserToRole("daniel", publisher);
+            await AddUserToRole("andrew", subscriber);
+            await AddUserToRole("serge", subscriber);
+
+            await AddUserToRole("harold", publisher);
         }
 
         private async Task CreateRole(string roleName)
         {
             try
             {
-                using (var identity = identityContextFactory())
+                if (await roleManager.FindByNameAsync(roleName) == null)
                 {
-                    using (var roleStore = new RoleStore<ApplicationRole, string, IdentityUserRole>(identity))
+                    var role = new ApplicationRole()
                     {
-                        using (var roleManager = new RoleManager<ApplicationRole, string>(roleStore))
-                        {
-                            if (await roleManager.FindByNameAsync(roleName) == null)
-                            {
-                                var role = new ApplicationRole()
-                                {
-                                    Name = roleName,
-                                    NormalizedName = roleName.ToUpperInvariant()
-                                };
-                                var result = await roleManager.CreateAsync(role);
+                        Name = roleName,
+                        NormalizedName = roleName.ToUpperInvariant()
+                    };
+                    var result = await roleManager.CreateAsync(role);
 
-                                if (!result.Succeeded)
-                                {
-                                    logger.LogError($"Failed to create role {string.Join(", ", result.Errors)}\n");
-                                }
-                            }
-                        }
+                    if (!result.Succeeded)
+                    {
+                        logger.LogError($"Failed to create role {string.Join(", ", result.Errors)}\n");
                     }
-                    await identity.SaveChangesAsync();
                 }
             }
             catch (Exception ex)
@@ -104,40 +151,29 @@ namespace Journals.Repository.DataContext
         {
             try
             {
-                using (var identity = identityContextFactory())
+                if (await userManager.FindByNameAsync(userName) == null)
                 {
-                    using (var store = new Compat.UserStore<ApplicationUser>(identity))
+
+                    var user = new ApplicationUser
                     {
-                        using (var manager = new UserManager<ApplicationUser>(store))
-                        {
-
-                            if (await manager.FindByNameAsync(userName) == null)
-                            {
-
-                                var user = new ApplicationUser
-                                {
-                                    UserName = userName,
-                                    Email = $"me+{userName}@leonardopires.net",
-                                };
+                        UserName = userName,
+                        Email = $"me+{userName}@leonardopires.net",                                                
+                    };
 
 
-                                logger.LogDebug(
-                                    $"Creating test user created: {userName}, {defaultPassword}, {roleName}\n");
+                    logger.LogDebug(
+                        $"Creating test user created: {userName}, {defaultPassword}, {roleName}\n");
 
-                                var result = await manager.CreateAsync(user, defaultPassword);
+                    var result = await userManager.CreateAsync(user, defaultPassword);
 
-                                if (result.Succeeded)
-                                {
-                                    logger.LogDebug($"Test user created: {userName}, {defaultPassword}, {roleName}\n");
-                                }
-                                else
-                                {
-                                    logger.LogError($"Failed to create user: {string.Join(", ", result.Errors)}\n");
-                                }
-                            }
-                        }
+                    if (result.Succeeded)
+                    {
+                        logger.LogDebug($"Test user created: {userName}, {defaultPassword}, {roleName}\n");
                     }
-                    await identity.SaveChangesAsync();
+                    else
+                    {
+                        logger.LogError($"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}\n");
+                    }
                 }
             }
             catch (Exception ex)
@@ -150,19 +186,12 @@ namespace Journals.Repository.DataContext
         {
             try
             {
-                using (var identity = identityContextFactory())
+                var createdUser = await userManager.FindByNameAsync(userName);
+
+                if (createdUser != null && !await userManager.IsInRoleAsync(createdUser, roleName))
                 {
-                    using (var store = new Compat.UserStore<ApplicationUser>(identity))
-                    {
-                        var createdUser = await store.FindByNameAsync(userName);
 
-                        if (!await store.IsInRoleAsync(createdUser, roleName))
-                        {
-
-                            await store.AddToRoleAsync(createdUser, roleName);
-                        }
-                    }
-                    await identity.SaveChangesAsync();
+                    await userManager.AddToRoleAsync(createdUser, roleName);
                 }
             }
             catch (Exception ex)
@@ -171,9 +200,9 @@ namespace Journals.Repository.DataContext
             }
         }
 
-        public void InitializeDatabase(Compat.IdentityDbContext<ApplicationUser> context)
+        public void Dispose()
         {
-            
+            //context?.Dispose();
         }
 
     }

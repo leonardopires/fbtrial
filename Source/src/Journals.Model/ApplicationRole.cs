@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNet.Identity.CoreCompat;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Journals.Model
 {

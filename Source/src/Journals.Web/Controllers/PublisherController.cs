@@ -81,13 +81,12 @@ namespace Journals.Web.Controllers
                 using (var stream = file.OpenReadStream())
                 {
 
-                    using (var outStream = new MemoryStream())
+                    using (var binaryReader = new BinaryReader(stream))
                     {
-                        await stream.CopyToAsync(outStream);
-
                         var dbFile = new Model.File()
                         {
-                            Content = outStream.GetBuffer(),
+                            // dirty quick fix that would work since max file size is small
+                            Content = binaryReader.ReadBytes((int)file.Length),
                             ContentType = file.ContentType,
                             FileName = file.FileName,
                             Length = file.Length,

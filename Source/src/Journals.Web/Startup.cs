@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Journals.Model;
+using Journals.Repository;
 using Journals.Repository.DataContext;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -11,7 +13,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Journals.Web.Data;
 using Microsoft.AspNetCore.Antiforgery;
 using Serilog;
 
@@ -55,9 +56,13 @@ namespace Journals.Web
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
 
-            services.AddIdentity<ApplicationUserCore, ApplicationRoleCore>()
+            services.AddDbContext<JournalsContext>(
+                options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"))
+                );
+
+            services.AddIdentity<ApplicationUser, ApplicationRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddDefaultTokenProviders()
+                .AddDefaultTokenProviders()                                
                 ;
 
             if (env.IsDevelopment())
