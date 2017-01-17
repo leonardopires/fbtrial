@@ -1,4 +1,5 @@
 using System;
+using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 using Journals.Model;
@@ -11,7 +12,7 @@ using Classic = Microsoft.AspNet.Identity;
 
 namespace Journals.Repository.DataContext
 {
-    public class IdentitySeeder : IDbSeeder
+    public class IdentitySeeder :  IDbSeeder, IDatabaseInitializer<Compat.IdentityDbContext<ApplicationUser>>
     {
 
         private readonly Func<Compat.IdentityDbContext<ApplicationUser>> identityContextFactory;
@@ -168,6 +169,11 @@ namespace Journals.Repository.DataContext
             {
                 logger.LogCritical($"Unhandled exception creating user {userName}.\n\n{ex}\n");
             }
+        }
+
+        public void InitializeDatabase(Compat.IdentityDbContext<ApplicationUser> context)
+        {
+            
         }
 
     }

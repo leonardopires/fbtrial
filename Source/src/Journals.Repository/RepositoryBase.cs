@@ -51,7 +51,7 @@ namespace Journals.Repository
             {
                 using (DataContext)
                 {
-                    return DataContext.Set<TEntity>().Where(predicate).SingleOrDefault();
+                    return DataContext.Set<TEntity>().Where(predicate).FirstOrDefault();
                 }
             }
             else

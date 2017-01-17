@@ -16,129 +16,58 @@ namespace Journals.Repository
 
         public List<Journal> GetAllJournals()
         {
-            try
+            using (DataContext)
             {
-                using (DataContext)
-                {
-                    var result = DataContext.Journals.Include("Subscription").Where(a => a.Title != null);
-
-
-                    var list = result.AsEnumerable()
-                                     .Select(
-                                         f => new Journal
-                                         {
-                                             Id = f.Id,
-                                             Title = f.Title,
-                                             Description = f.Description,
-                                             UserId = f.UserId
-                                         }).ToList();
-
-                    return list;
-                }
+                return Table<Subscription>().Include("Subscription").Select(s => s.Journal).Where(j => j.Title != null)?.ToList();
             }
-            catch (Exception e)
-            {
-                OperationStatus.CreateFromException("Error fetching subscriptions: ", e);
-                ;
-            }
-
-            return new List<Journal>();
         }
 
         public List<Subscription> GetJournalsForSubscriber(string userId)
         {
-            try
-            {
-                using (DataContext)
-                {
-                    var subscriptions = DataContext.Subscriptions.Include("Journal").Where(u => u.UserId == userId);
-                    if (subscriptions != null)
-                    {
-                        return subscriptions.ToList();
-                    }
-                }
+            using (DataContext)
+            {                
+                return Table<Subscription>().Include("Journal").Where(u => u.UserId == userId)?.ToList();
             }
-            catch (Exception e)
-            {
-                OperationStatus.CreateFromException("Error fetching subscriptions: ", e);
-                ;
-            }
-
-            return new List<Subscription>();
         }
 
         public List<Subscription> GetJournalsForSubscriberByUserName(string userName)
         {
-            try
+            using (DataContext)
             {
-                using (DataContext)
-                {
-                    var subscriptions =
-                        DataContext.Subscriptions.Include("Journal").Where(u => u.User.UserName == userName);
-
-                    if (subscriptions != null)
-                    {
-                        return subscriptions.ToList();
-                    }
-                }
+                return Table<Subscription>().Include("Journal").Where(u => u.User.UserName == userName)?.ToList();
             }
-            catch (Exception e)
-            {
-                OperationStatus.CreateFromException("Error fetching subscriptions: ", e);
-                ;
-            }
-
-            return new List<Subscription>();
         }
 
         public OperationStatus AddSubscription(int journalId, string userId)
         {
-            var opStatus = new OperationStatus {Status = true};
-            try
+            var subscription = new Subscription
             {
-                using (DataContext)
-                {
-                    var s = new Subscription
-                    {
-                        JournalId = journalId,
-                        UserId = userId
-                    };
+                JournalId = journalId,
+                UserId = userId
+            };
 
-                    var j = DataContext.Subscriptions.Add(s);
-                    DataContext.SaveChanges();
-                }
-            }
-            catch (Exception e)
-            {
-                opStatus = OperationStatus.CreateFromException("Error adding subscription: ", e);
-            }
-
-            return opStatus;
+            return ExecuteOperations(
+                Add(subscription),
+                Save
+                );
         }
 
         public OperationStatus UnSubscribe(int journalId, string userId)
         {
-            var opStatus = new OperationStatus {Status = true};
-            try
-            {
-                using (DataContext)
+            IEnumerable<Subscription> subscriptions;
+
+            return ExecuteOperations(
+                context =>
                 {
-                    var subscriptions =
-                        DataContext.Subscriptions.Where(u => u.JournalId == journalId && u.UserId == userId);
+                    subscriptions = GetMany<Subscription>(u => u.JournalId == journalId && u.UserId == userId);
 
-                    foreach (var s in subscriptions)
+                    foreach (var subscription in subscriptions)
                     {
-                        DataContext.Subscriptions.Remove(s);
+                        context.Data.Subscriptions.Remove(subscription);
                     }
-                    DataContext.SaveChanges();
-                }
-            }
-            catch (Exception e)
-            {
-                opStatus = OperationStatus.CreateFromException("Error deleting subscription: ", e);
-            }
-
-            return opStatus;
+                },
+                Save                
+            );
         }
 
     }
