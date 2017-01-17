@@ -10,10 +10,24 @@ namespace Journals.Repository
 
         OperationStatus AddJournal(Journal newJournal);
 
-        Journal GetJournalById(int Id);
+        Journal GetJournalById(int id);
 
         OperationStatus DeleteJournal(Journal journal);
 
         OperationStatus UpdateJournal(Journal journal);
+
+        File GetFile(int id);
+
+        OperationStatus AddFile(File file);
+
+        OperationStatus DeleteFile(int id);
+
+        List<Issue> GetIssues(int journalId);
+
+        OperationStatus AddIssue(Issue issue);
+
+        OperationStatus DeleteIssue(Issue issue);
+
+        OperationStatus UpdateIssue(Issue issue);
     }
 }

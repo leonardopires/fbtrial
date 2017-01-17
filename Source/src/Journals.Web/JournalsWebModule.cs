@@ -29,7 +29,7 @@ namespace Journals.Web
         protected override void Load(ContainerBuilder builder)
         {
             base.Load(builder);
-
+             
             builder.Register(
                 r =>
                 {
@@ -90,7 +90,18 @@ namespace Journals.Web
                 .As<Core.EntityFrameworkCore.IdentityDbContext<ApplicationUserCore, ApplicationRoleCore, string>>()
             ;
 
-            builder.RegisterTypes(GetType().Assembly.GetTypes().Where(t => typeof(IDbSeeder).IsAssignableFrom(t)).ToArray()).As<IDbSeeder>();
+            var seeders = AppDomain.CurrentDomain.GetAssemblies()
+                                      .SelectMany(a => a.GetTypes())
+                                      .Where(
+                                          t => t.IsClass &&
+                                          t.GetInterfaces()
+                                                .Any(i => i == typeof(IDbSeeder))
+                                      ).ToArray();
+
+            foreach (var seeder in seeders)
+            {
+                builder.RegisterType(seeder).As<IDbSeeder>();
+            }
 
             // Add application services.
             builder.RegisterType<AuthMessageSender>().As<IEmailSender>().As<ISmsSender>();

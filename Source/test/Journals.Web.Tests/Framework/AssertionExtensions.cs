@@ -16,9 +16,6 @@ namespace Journals.Web.Tests.Framework
             model.Should().NotBeNull();
 
             model.Id.Should().Be(viewModel.Id);
-            model.FileName.Should().Be(viewModel.FileName);
-            model.Content.Should().NotBeNull().And.Match(c => c.SequenceEqual(viewModel.Content));
-            model.ContentType.Should().Be(viewModel.ContentType);
             model.Title.Should().Be(viewModel.Title);
             model.Description.Should().Be(viewModel.Description);
             model.UserId.Should().Be(viewModel.UserId);

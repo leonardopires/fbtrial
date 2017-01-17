@@ -107,13 +107,25 @@ namespace Journals.Web.Tests.Controllers
         }
 
         [Theory]
-        [MemberData(nameof(GetDataMember), nameof(Data.GetInvalidIdsAndExpectedStatusCodes))]
+        [MemberData(nameof(GetDataMember), nameof(Data.GetFileIdsAndExpectedStatusCodes))]
         public void GetFile_Returns_StatusCode_OnErrors(int fileId, HttpStatusCode httpStatus)
         {
             var controller = GetController();
             var result = controller.GetFile(fileId);
 
-            result.Should().BeAssignableTo<StatusCodeResult>().Which.StatusCode.Should().Be((int)httpStatus);
+            if (httpStatus == HttpStatusCode.OK)
+            {
+                var fileResult = result.Should().BeAssignableTo<FileContentResult>().Which;
+
+                fileResult.ContentType.Should().Be("application/pdf");
+                fileResult.FileContents.Should().NotBeNull();
+                fileResult.FileContents.Length.Should().BeGreaterOrEqualTo(0);
+                fileResult.FileDownloadName.Should().NotBeNullOrWhiteSpace();
+            }
+            else
+            {
+                result.Should().BeAssignableTo<StatusCodeResult>().Which.StatusCode.Should().Be((int) httpStatus);
+            }
         }
 
         [Theory]
@@ -305,7 +317,7 @@ namespace Journals.Web.Tests.Controllers
         {
 
             var journalRepository = Container.Resolve<IJournalRepository>();
-            List<Journal> items = journalRepository.GetAllJournals(viewModel.UserId);
+            IList<Journal> items = journalRepository.GetAllJournals(viewModel.UserId);
 
             int count = items.Count;
 

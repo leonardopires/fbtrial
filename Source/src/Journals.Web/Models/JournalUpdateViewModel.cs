@@ -1,9 +1,26 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using Microsoft.AspNetCore.Http;
 
 namespace Journals.Model
 {
+
+    public class IssueViewModel
+    {
+        public int Id { get; set; }
+
+        public int JournalId { get; set; }
+
+        public int? FileId { get; set; }
+
+        [Required]
+        public IFormFile File { get; set; }
+
+    }
+
+
     public class JournalUpdateViewModel : IEquatable<JournalUpdateViewModel>
     {
         public int Id { get; set; }
@@ -14,17 +31,6 @@ namespace Journals.Model
         [Required, DataType(DataType.MultilineText)]
         public string Description { get; set; }
 
-        [Required]
-        public string FileName { get; set; }
-
-        [Required]
-        public string ContentType { get; set; }
-
-        public byte[] Content { get; set; }
-//
-//        [ValidateFile]
-//        public HttpPostedFileBase File { get; set; }
-
         public string UserId { get; set; }
 
         public bool Equals(JournalUpdateViewModel other)
@@ -33,9 +39,11 @@ namespace Journals.Model
                 return false;
             if (ReferenceEquals(this, other))
                 return true;
-            return Id == other.Id && string.Equals(Title, other.Title) && string.Equals(Description, other.Description)
-                   && string.Equals(FileName, other.FileName) && string.Equals(ContentType, other.ContentType)
-                   && (Equals(Content, other.Content) || Content.SequenceEqual(other.Content)) && UserId == other.UserId;
+            return
+                Id == other.Id 
+                && string.Equals(Title, other.Title) 
+                && string.Equals(Description, other.Description)
+                && UserId == other.UserId;
         }
 
         public override bool Equals(object obj)
@@ -56,9 +64,6 @@ namespace Journals.Model
                 var hashCode = Id;
                 hashCode = (hashCode * 397) ^ (Title?.GetHashCode() ?? 0);
                 hashCode = (hashCode * 397) ^ (Description?.GetHashCode() ?? 0);
-                hashCode = (hashCode * 397) ^ (FileName?.GetHashCode() ?? 0);
-                hashCode = (hashCode * 397) ^ (ContentType?.GetHashCode() ?? 0);
-                hashCode = (hashCode * 397) ^ (Content?.GetHashCode() ?? 0);
                 hashCode = (hashCode * 397) ^ (UserId?.GetHashCode() ?? 0); ;
                 return hashCode;
             }

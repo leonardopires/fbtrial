@@ -6,23 +6,30 @@ namespace Journals.Model
 {
     public class JournalViewModel : IEquatable<JournalViewModel>
     {
+        /// <summary>
+        /// Gets or sets the identifier.
+        /// </summary>
+        /// <value>The identifier.</value>
         public int Id { get; set; }
 
+        /// <summary>
+        /// Gets or sets the title.
+        /// </summary>
+        /// <value>The title.</value>
         [Required]
         public string Title { get; set; }
 
+        /// <summary>
+        /// Gets or sets the description.
+        /// </summary>
+        /// <value>The description.</value>
         [Required, DataType(DataType.MultilineText)]
         public string Description { get; set; }
 
-        public string FileName { get; set; }
-
-        public string ContentType { get; set; }
-
-        public byte[] Content { get; set; }
-
-//        [Required, ValidateFile]
-//        public HttpPostedFileBase File { get; set; }
-
+        /// <summary>
+        /// Gets or sets the user identifier.
+        /// </summary>
+        /// <value>The user identifier.</value>
         public string UserId { get; set; }
 
         /// <summary>
@@ -34,9 +41,14 @@ namespace Journals.Model
         {
             if (ReferenceEquals(null, other))
                 return false;
+
             if (ReferenceEquals(this, other))
                 return true;
-            return Id == other.Id && string.Equals(Title, other.Title) && string.Equals(Description, other.Description) && string.Equals(FileName, other.FileName) && string.Equals(ContentType, other.ContentType) && (other.Content == Content || Content.SequenceEqual(other.Content)) && UserId == other.UserId;
+
+            return Id == other.Id 
+                && string.Equals(Title, other.Title) 
+                && string.Equals(Description, other.Description) 
+                && UserId == other.UserId;
         }
 
         /// <summary>
@@ -66,19 +78,28 @@ namespace Journals.Model
                 var hashCode = Id;
                 hashCode = (hashCode * 397) ^ (Title?.GetHashCode() ?? 0);
                 hashCode = (hashCode * 397) ^ (Description?.GetHashCode() ?? 0);
-                hashCode = (hashCode * 397) ^ (FileName?.GetHashCode() ?? 0);
-                hashCode = (hashCode * 397) ^ (ContentType?.GetHashCode() ?? 0);
-                hashCode = (hashCode * 397) ^ (Content?.GetHashCode() ?? 0);
                 hashCode = (hashCode * 397) ^ (UserId?.GetHashCode() ?? 0);
                 return hashCode;
             }
         }
 
+        /// <summary>
+        /// Implements the operator ==.
+        /// </summary>
+        /// <param name="left">The left.</param>
+        /// <param name="right">The right.</param>
+        /// <returns>The result of the operator.</returns>
         public static bool operator ==(JournalViewModel left, JournalViewModel right)
         {
             return Equals(left, right);
         }
 
+        /// <summary>
+        /// Implements the operator !=.
+        /// </summary>
+        /// <param name="left">The left.</param>
+        /// <param name="right">The right.</param>
+        /// <returns>The result of the operator.</returns>
         public static bool operator !=(JournalViewModel left, JournalViewModel right)
         {
             return !Equals(left, right);

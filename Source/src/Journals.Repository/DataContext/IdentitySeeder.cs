@@ -17,7 +17,9 @@ namespace Journals.Repository.DataContext
         private readonly Func<Compat.IdentityDbContext<ApplicationUser>> identityContextFactory;
         private readonly ILogger logger;
 
-        public IdentitySeeder(Func<Compat.IdentityDbContext<ApplicationUser>> identityContextFactory, ILogger<IdentitySeeder> logger)
+        public IdentitySeeder(
+            Func<Compat.IdentityDbContext<ApplicationUser>> identityContextFactory,
+            ILogger<IdentitySeeder> logger)
         {
             this.identityContextFactory = identityContextFactory;
             this.logger = logger;
@@ -31,10 +33,14 @@ namespace Journals.Repository.DataContext
             var defaultPassword = "Passw0rd";
 
 
+            logger.LogInformation(">> Creating roles");
+
             await Task.WhenAll(
                 CreateRole(publisher),
                 CreateRole(subscriber)
             );
+
+            logger.LogInformation(">> Creating users");
 
             await Task.WhenAll(
                 CreateUser("pappu", defaultPassword, publisher),
@@ -45,6 +51,52 @@ namespace Journals.Repository.DataContext
                 CreateUser("harold", defaultPassword, publisher)
             );
 
+            logger.LogInformation(">> Adding users to roles");
+
+            await Task.WhenAll(
+                AddUserToRole("pappu", publisher),
+                AddUserToRole("pappy", subscriber),
+                AddUserToRole("daniel", publisher),
+                AddUserToRole("andrew", subscriber),
+                AddUserToRole("serge", subscriber),
+                AddUserToRole("harold", publisher)
+            );
+
+        }
+
+        private async Task CreateRole(string roleName)
+        {
+            try
+            {
+                using (var identity = identityContextFactory())
+                {
+                    using (var roleStore = new RoleStore<ApplicationRole, string, IdentityUserRole>(identity))
+                    {
+                        using (var roleManager = new RoleManager<ApplicationRole, string>(roleStore))
+                        {
+                            if (await roleManager.FindByNameAsync(roleName) == null)
+                            {
+                                var role = new ApplicationRole()
+                                {
+                                    Name = roleName,
+                                    NormalizedName = roleName.ToUpperInvariant()
+                                };
+                                var result = await roleManager.CreateAsync(role);
+
+                                if (!result.Succeeded)
+                                {
+                                    logger.LogError($"Failed to create role {string.Join(", ", result.Errors)}\n");
+                                }
+                            }
+                        }
+                    }
+                    await identity.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical($"Unhandled exception creating role {roleName}.\n\n{ex}\n");
+            }
         }
 
         private async Task CreateUser(string userName, string defaultPassword, string roleName)
@@ -60,21 +112,26 @@ namespace Journals.Repository.DataContext
 
                             if (await manager.FindByNameAsync(userName) == null)
                             {
-                                var user = new ApplicationUser();
 
-                                user.UserName = userName;
-                                user.Email = $"me+{userName}@leonardopires.net";
+                                var user = new ApplicationUser
+                                {
+                                    UserName = userName,
+                                    Email = $"me+{userName}@leonardopires.net",
+                                };
+
+
+                                logger.LogDebug(
+                                    $"Creating test user created: {userName}, {defaultPassword}, {roleName}\n");
 
                                 var result = await manager.CreateAsync(user, defaultPassword);
+
                                 if (result.Succeeded)
                                 {
-                                    var createdUser = await manager.FindByNameAsync(userName);
-                                    await manager.AddToRoleAsync(createdUser.Id, roleName);
-                                    logger.LogDebug(null, $"Test user created: {userName}, {defaultPassword}, {roleName}");
+                                    logger.LogDebug($"Test user created: {userName}, {defaultPassword}, {roleName}\n");
                                 }
                                 else
                                 {
-                                    logger.LogError(null, "Failed to create user {@errors}", result.Errors);
+                                    logger.LogError($"Failed to create user: {string.Join(", ", result.Errors)}\n");
                                 }
                             }
                         }
@@ -84,30 +141,24 @@ namespace Journals.Repository.DataContext
             }
             catch (Exception ex)
             {
-                logger.LogCritical(null, ex, "Error: ", ex);
+                logger.LogCritical($"Unhandled exception creating user {userName}.\n\n{ex}\n");
             }
         }
 
-        private async Task CreateRole(string roleName)
+        private async Task AddUserToRole(string userName, string roleName)
         {
             try
             {
                 using (var identity = identityContextFactory())
                 {
-                    using (var roleStore = new RoleStore<ApplicationRole, string, IdentityUserRole>(identity))
+                    using (var store = new Compat.UserStore<ApplicationUser>(identity))
                     {
-                        using (var roleManager = new RoleManager<ApplicationRole, string>(roleStore))
-                        {
-                            if (await roleManager.FindByNameAsync(roleName) == null)
-                            {
-                                var role = new ApplicationRole() {Name = roleName};
-                                var result = await roleManager.CreateAsync(role);
+                        var createdUser = await store.FindByNameAsync(userName);
 
-                                if (!result.Succeeded)
-                                {
-                                    logger.LogError(null, "Failed to create role {@errors}", result.Errors);
-                                }
-                            }
+                        if (!await store.IsInRoleAsync(createdUser, roleName))
+                        {
+
+                            await store.AddToRoleAsync(createdUser, roleName);
                         }
                     }
                     await identity.SaveChangesAsync();
@@ -115,8 +166,9 @@ namespace Journals.Repository.DataContext
             }
             catch (Exception ex)
             {
-                logger.LogCritical(null, ex, "Error: ", ex);
+                logger.LogCritical($"Unhandled exception creating user {userName}.\n\n{ex}\n");
             }
         }
+
     }
 }

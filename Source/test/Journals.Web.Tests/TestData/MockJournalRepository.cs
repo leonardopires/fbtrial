@@ -1,10 +1,14 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Journals.Model;
 using Journals.Repository;
 using LP.Test.Framework.Core;
+using Serilog;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
+using File = Journals.Model.File;
 
 namespace Journals.Web.Tests.TestData
 {
@@ -55,18 +59,57 @@ namespace Journals.Web.Tests.TestData
                         {
                             var model = models[index];
 
-                            model.Content = a.Content;
-                            model.ContentType = a.ContentType;
-                            model.FileName = a.FileName;
                             model.Description = a.Description;
                             model.ModifiedDate = a.ModifiedDate;
                             model.Title = a.Title;
                             model.UserId = a.UserId;
+                            model.CreatedDate = a.CreatedDate;
 
                             models[index] = model;
                         }
                         return new OperationStatus {Status = index >= 0};
                     });
+
+            mock.Arrange(m => m.GetFile(Arg.AnyInt)).Returns(
+                (int id) => 
+                    (id >= 0 && id < 300) 
+                    ? new File {Id = id, Content = new byte[id], Length = id, ContentType = "application/pdf", FileName = $"File_{id}.pdf", ModifiedDate = DateTime.UtcNow} 
+                    : null
+                 );
+
+            mock.Arrange(m => m.AddFile(Arg.IsAny<File>())).Returns(
+                (File file) =>
+                {
+                    OperationStatus status;
+
+                    try
+                    {
+                        using (var stream = new MemoryStream(file.Content))
+                        {
+                            var directory = new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, "Uploads"));
+                            directory.Create();
+
+                            var localFile = new FileInfo(Path.Combine(directory.ToString(), $"{DateTime.UtcNow:yyyyMMdd-hhmmss}_{file.FileName}"));
+
+
+                            using (var fileStream = localFile.Open(FileMode.OpenOrCreate, FileAccess.Write, FileShare.Delete))
+                            {
+                                stream.CopyTo(fileStream);
+
+                                Log.Logger.Debug($"Saved file {localFile.FullName}");
+
+                                status = new OperationStatus() { Status = true };
+                            } 
+
+                        }
+                    }
+                    catch (IOException ex)
+                    {
+                        status = OperationStatus.CreateFromException("An error occurred while saving the uploaded file.", ex);
+                    }
+                    return status;
+                });
+
         }
 
         public List<Journal> GetAllJournals(string userId)
@@ -92,6 +135,41 @@ namespace Journals.Web.Tests.TestData
         public OperationStatus UpdateJournal(Journal journal)
         {
             return mock.UpdateJournal(journal);
+        }
+
+        public File GetFile(int id)
+        {
+            return mock.GetFile(id);
+        }
+
+        public OperationStatus AddFile(File file)
+        {
+            return mock.AddFile(file);
+        }
+
+        public OperationStatus DeleteFile(int id)
+        {
+            return mock.DeleteFile(id);
+        }
+
+        public List<Issue> GetIssues(int journalId)
+        {
+            return mock.GetIssues(journalId);
+        }
+
+        public OperationStatus AddIssue(Issue issue)
+        {
+            return mock.AddIssue(issue);
+        }
+
+        public OperationStatus DeleteIssue(Issue issue)
+        {
+            return mock.DeleteIssue(issue);
+        }
+
+        public OperationStatus UpdateIssue(Issue issue)
+        {
+            return mock.UpdateIssue(issue);
         }
 
     }

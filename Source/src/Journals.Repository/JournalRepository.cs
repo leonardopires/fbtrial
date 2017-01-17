@@ -4,15 +4,21 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Data.Entity.Validation;
+using System.IO;
 using System.Linq;
+using Microsoft.Extensions.Logging;
+using File = Journals.Model.File;
 
 namespace Journals.Repository
 {
     public class JournalRepository : RepositoryBase<JournalsContext>, IJournalRepository
     {
 
-        public JournalRepository(Func<JournalsContext> contextFactory) : base(contextFactory)
+        private readonly ILogger<JournalRepository> logger;
+
+        public JournalRepository(Func<JournalsContext> contextFactory, ILogger<JournalRepository> logger) : base(contextFactory)
         {
+            this.logger = logger;
         }
 
         public List<Journal> GetAllJournals(string userId)
@@ -26,94 +32,113 @@ namespace Journals.Repository
         public Journal GetJournalById(int Id)
         {
             using (DataContext)
+            {
                 return DataContext.Journals.SingleOrDefault(j => j.Id == Id);
+            }
         }
 
         public OperationStatus AddJournal(Journal newJournal)
         {
-            var opStatus = new OperationStatus { Status = true };
-            try
-            {
-                using (DataContext)
+            return ExecuteOperations(
+                context =>
                 {
-                    newJournal.ModifiedDate = DateTime.Now;
-                    var j = DataContext.Journals.Add(newJournal);
-                    DataContext.SaveChanges();
-                }
-            }
-            catch (Exception e)
-            {
-                opStatus = OperationStatus.CreateFromException("Error adding journal: ", e);
-            }
+                    newJournal.ModifiedDate = DateTime.UtcNow;
+                    newJournal.CreatedDate = DateTime.UtcNow;
 
-            return opStatus;
+                    var j = context.Data.Journals.Add(newJournal);
+                    context.Data.Entry(j).State = EntityState.Added;
+                },
+                Save
+                );
         }
 
         public OperationStatus DeleteJournal(Journal journal)
         {
-            var opStatus = new OperationStatus { Status = true };
-            try
-            {
-                using (DataContext)
+            return ExecuteOperations(
+                context =>
                 {
-                    var subscriptions = DataContext.Subscriptions.Where(j => j.JournalId == journal.Id);
+                    var subscriptions = GetMany<Subscription>(s => s.JournalId == journal.Id);
+
                     foreach (var subscription in subscriptions)
                     {
-                        DataContext.Subscriptions.Remove(subscription);
+                        context.Data.Entry(subscription).State = EntityState.Deleted;
+                        context.Data.Subscriptions.Remove(subscription);
                     }
 
-                    var journalToBeDeleted = DataContext.Journals.Find(journal.Id);
-                    DataContext.Journals.Remove(journalToBeDeleted);
-                    DataContext.SaveChanges();
-                }
-            }
-            catch (Exception e)
-            {
-                opStatus = OperationStatus.CreateFromException("Error deleting journal: ", e);
-            }
+                    var journalToBeDeleted = Get<Journal>(j => j.Id == journal.Id);
 
-            return opStatus;
+                    context.Data.Entry(journalToBeDeleted).State = EntityState.Deleted;
+                    context.Data.Journals.Remove(journalToBeDeleted);
+                },
+                Save
+             );
         }
 
         public OperationStatus UpdateJournal(Journal journal)
         {
-            var opStatus = new OperationStatus { Status = true };
-            try
-            {
-                var j = DataContext.Journals.Find(journal.Id);
-                if (journal.Title != null)
-                    j.Title = journal.Title;
+            Journal existingJournal = null;
 
-                if (journal.Description != null)
-                    j.Description = journal.Description;
-
-                if (journal.Content != null)
-                    j.Content = journal.Content;
-
-                if (journal.ContentType != null)
-                    j.ContentType = journal.ContentType;
-
-                if (journal.FileName != null)
-                    j.FileName = journal.FileName;
-
-                j.ModifiedDate = DateTime.Now;
-
-                DataContext.Entry(j).State = EntityState.Modified;
-                DataContext.SaveChanges();
-            }
-            catch (DbEntityValidationException e)
-            {
-                foreach (var eve in e.EntityValidationErrors)
+            return ExecuteOperations(
+                context =>
                 {
-                    OperationStatus.CreateFromException(string.Format("Entity of type \"{0}\" in state \"{1}\" has the following validation errors:", eve.Entry.Entity.GetType().Name, eve.Entry.State), e);
-                }
-            }
-            catch (Exception e)
-            {
-                opStatus = OperationStatus.CreateFromException("Error updating journal: ", e);
-            }
+                    existingJournal = context.Data.Journals.Find(journal.Id);
 
-            return opStatus;
+                    if (journal.Title != null)
+                        existingJournal.Title = journal.Title;
+
+                    if (journal.Description != null)
+                        existingJournal.Description = journal.Description;
+
+                    existingJournal.ModifiedDate = DateTime.UtcNow;
+
+                    context.Data.Entry(existingJournal).State = EntityState.Modified;
+                },
+                Save);
+        }
+
+        public File GetFile(int id)
+        {
+            return Get<File>(f => f.Id == id);
+        }
+
+        public OperationStatus AddFile(File file)
+        {
+            return ExecuteOperations(
+                context =>
+                {
+                    file.ModifiedDate = DateTime.UtcNow;
+                },
+                Add(file),
+                Save
+            );
+        }
+
+        public OperationStatus DeleteFile(int id)
+        {
+            return ExecuteOperations(
+                Remove(Get<File>(f => f.Id == id)),
+                Save
+             );
+        }
+
+        public List<Issue> GetIssues(int journalId)
+        {
+            return GetMany<Issue>(i => i.JournalId == journalId).ToList();
+        }
+
+        public OperationStatus AddIssue(Issue issue)
+        {
+            throw new NotImplementedException();
+        }
+
+        public OperationStatus DeleteIssue(Issue issue)
+        {
+            throw new NotImplementedException();
+        }
+
+        public OperationStatus UpdateIssue(Issue issue)
+        {
+            throw new NotImplementedException();
         }
     }
 }

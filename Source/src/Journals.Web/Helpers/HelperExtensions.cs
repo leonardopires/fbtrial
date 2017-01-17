@@ -8,18 +8,18 @@ namespace Journals.Web.Helpers
 {
     public static class HelperExtensions
     {
-        public static void PopulateFile(IFormFile file, Journal journal)
+        public static void PopulateFile(this IFormFile formFile, File storageFile)
         {
-            if (file != null && file.Length > 0)
+            if (formFile != null && formFile.Length > 0)
             {
-                journal.FileName = System.IO.Path.GetFileName(file.FileName);
-                journal.ContentType = file.ContentType;
+                storageFile.FileName = System.IO.Path.GetFileName(formFile.FileName);
+                storageFile.ContentType = formFile.ContentType;
 
-                using (var readStream = file.OpenReadStream())
+                using (var readStream = formFile.OpenReadStream())
                 {
                     using (var reader = new System.IO.BinaryReader(readStream))
                     {
-                        journal.Content = reader.ReadBytes((int)file.Length);
+                        storageFile.Content = reader.ReadBytes((int)formFile.Length);
                     }
                 }
             }
@@ -30,6 +30,7 @@ namespace Journals.Web.Helpers
         {
             return WithStatusCode(result, (int)statusCode);
         }
+
         public static TResult WithStatusCode<TResult>(this TResult result, int statusCode)
             where TResult : IActionResult
         {

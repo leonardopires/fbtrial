@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -14,17 +15,17 @@ namespace Journals.Model
         [Required, DataType(DataType.MultilineText)]
         public string Description { get; set; }
 
-        public string FileName { get; set; }
 
-        public string ContentType { get; set; }
-
-        public byte[] Content { get; set; }
-
-        public DateTime ModifiedDate { get; set; }
+        public string UserId { get; set; }
 
         [ForeignKey("UserId")]
         public ApplicationUser User { get; set; }
 
-        public string UserId { get; set; }
+        public ICollection<Issue> Issues { get; set; } = new List<Issue>();
+
+        public DateTime ModifiedDate { get; set; }
+
+        public DateTime CreatedDate { get; set; }
+
     }
 }

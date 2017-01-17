@@ -4,29 +4,29 @@ using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Journals.Model;
 using Journals.Repository.DataContext;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNet.Identity.CoreCompat;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Journals.Web.Data;
-using Journals.Web.Models;
-using Journals.Web.Services;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Antiforgery;
 using Serilog;
-using IdentityRole = Microsoft.AspNetCore.Identity.EntityFrameworkCore.IdentityRole;
+
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Journals.Web
 {
     public class Startup
     {
+
+        private readonly IHostingEnvironment env;
+
         public Startup(IHostingEnvironment env)
         {
+            this.env = env;
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -60,6 +60,11 @@ namespace Journals.Web
                 .AddDefaultTokenProviders()
                 ;
 
+            if (env.IsDevelopment())
+            {
+                services.Add(new ServiceDescriptor(typeof(IAntiforgery), new NullAntiForgery()));
+            }
+
             services.AddMvc(options => options.RespectBrowserAcceptHeader = true);
 
             var builder = new ContainerBuilder();
@@ -92,7 +97,6 @@ namespace Journals.Web
                 app.UseDeveloperExceptionPage();
                 app.UseDatabaseErrorPage();
                 app.UseBrowserLink();
-                
             }
             else
             {
@@ -135,8 +139,7 @@ namespace Journals.Web
                 var seeders =
                     ApplicationContainer.ResolveOptional<IEnumerable<IDbSeeder>>()?.ToList();
 
-                if (seeders != null
-                    && seeders.Any())
+                if (seeders != null && seeders.Any())
                 {
                     foreach (var seeder in seeders)
                     {
@@ -153,7 +156,7 @@ namespace Journals.Web
             }
             catch (Exception ex)
             {
-                logger.LogCritical(new EventId(ex.HResult, ex.Message), "Error setting up the database.");
+                logger.LogCritical($"Error setting up the database.\n\n{ex}\n");
             }
         }
 

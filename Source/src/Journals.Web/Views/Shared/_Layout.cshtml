@@ -39,7 +39,7 @@
                         {
                             <li><a asp-area="" asp-controller="Subscriber" asp-action="Index">All Publications</a></li>
                         }
-                        if (User.IsInRole("Publishers"))
+                        if (User.IsInRole("Publisher"))
                         {
                             <li><a asp-area="" asp-controller="Publisher" asp-action="Index">Manage Publications</a></li>
                         }

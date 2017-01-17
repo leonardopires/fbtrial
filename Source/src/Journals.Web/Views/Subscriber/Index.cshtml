@@ -9,7 +9,14 @@
 
 @if (Model == null || !Model.Any())
 {
-    <div class="alert alert-danger">No journals are available for subscription.</div>
+    <div class="row alert @(User.IsInRole("Publisher") ? "alert-info" : "alert-danger")">
+        <div class="col-sm-9">
+            <strong>No journals are available for subscription.</strong>
+        </div>
+        <div class="col-sm-3">
+            <button class="btn btn-primary btn-lg pull-right">Add New Journal</button>
+        </div>
+    </div>
 }
 else
 {
