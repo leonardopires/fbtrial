@@ -26,12 +26,12 @@ The database is created using Code-First technique of the Entity Framework.
 
 		3. Once the command run successfully, this will create database, UserProfile related tables and 
 the following users and roles:
-			a. UserName: pappu, 	Password: Passw0rd, Role: Publisher
-			b. UserName: pappy, 	Password: Passw0rd, Role: Subscriber
-			c. UserName: daniel, 	Password: Passw0rd, Role: Publisher
-			d. UserName: andrew, 	Password: Passw0rd, Role: Subscriber
-			e. UserName: serge, 	Password: Passw0rd, Role: Subscriber
-			f. UserName: harold, 	Password: Passw0rd, Role: Publisher
+			a. UserName: pappu, 	Password: Passw0rd! , Role: Publisher
+			b. UserName: pappy, 	Password: Passw0rd! , Role: Subscriber
+			c. UserName: daniel, 	Password: Passw0rd! , Role: Publisher
+			d. UserName: andrew, 	Password: Passw0rd! , Role: Subscriber
+			e. UserName: serge, 	Password: Passw0rd! , Role: Subscriber
+			f. UserName: harold, 	Password: Passw0rd! , Role: Publisher
 			
 Running the application:
 ------------------------
