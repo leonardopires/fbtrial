@@ -136,10 +136,10 @@ namespace Journals.Web.Controllers
             return View(nameof(Create), journal);
         }
 
-        public IActionResult Delete(int journalId)
+        public IActionResult Delete(int id)
         {
             IActionResult result;
-            var selectedJournal = _journalRepository.GetJournalById(journalId);
+            var selectedJournal = _journalRepository.GetJournalById(id);
 
             if (selectedJournal != null)
             {
@@ -174,11 +174,11 @@ namespace Journals.Web.Controllers
             return result;
         }
 
-        public IActionResult Edit(int journalId)
+        public IActionResult Edit(int id)
         {
             IActionResult result;
 
-            var selectedJournal = _journalRepository.GetJournalById(journalId);
+            var selectedJournal = _journalRepository.GetJournalById(id);
 
 
             if (selectedJournal != null)

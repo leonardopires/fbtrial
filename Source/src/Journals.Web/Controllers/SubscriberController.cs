@@ -25,7 +25,10 @@ namespace Journals.Web.Controllers
         public SubscriberController(
             ISubscriptionRepository subscriptionRepo,
             IStaticMembershipService membership, 
-            IMapper mapper)
+            IMapper mapper,
+            IJournalRepository journals
+
+            )
         {
             _subscriptionRepository = subscriptionRepo;
             this.membership = membership;
@@ -60,6 +63,7 @@ namespace Journals.Web.Controllers
             }
             return result;
         }
+
 
         private string GetUserId()
         {
