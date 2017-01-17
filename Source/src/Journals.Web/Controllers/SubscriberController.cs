@@ -40,7 +40,7 @@ namespace Journals.Web.Controllers
             if (journals != null)
             {
                 var userId = GetUserId();
-                var subscriptions = _subscriptionRepository.GetJournalsForSubscriberByUserName(userId);
+                var subscriptions = _subscriptionRepository.GetJournalsForSubscriber(userId);
 
                 var subscriberModel = Mapper.Map<List<Journal>, List<SubscriptionViewModel>>(journals);
 
