@@ -14,9 +14,11 @@ Configuration String:
 -----------------------
 The Configuration String for the database is configured in the respective `appsettings.json` in Journals.Web:
 
-	<add name="JournalsDB" connectionString="Data Source=localhost;Initial 
-	Catalog=JournalsDB;Integrated Security=True;" providerName="System.Data.SqlClient" />
-
+```JSON
+	  "ConnectionStrings": {
+	    "DefaultConnection": "Data Source=.;Initial Catalog=JournalsDB;Integrated Security=True;MultipleActiveResultSets=true"
+	  },
+```
 Creating UserProfile Tables & Seeding Users:
 ------------------------------------------------
 
