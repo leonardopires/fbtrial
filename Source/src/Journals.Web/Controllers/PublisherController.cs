@@ -8,10 +8,13 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Journals.Model;
 using Journals.Repository;
+using Journals.Web.Helpers;
+using Journals.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -19,7 +22,7 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 namespace Journals.Web.Controllers
 {
     [Authorize]
-    public class PublisherController : Controller
+    public class PublisherController : JournalControllerBase
     {
 
         private readonly IJournalRepository _journalRepository;
@@ -209,7 +212,8 @@ namespace Journals.Web.Controllers
 
                 if (!opStatus.Status)
                 {
-                    result = StatusCode((int)HttpStatusCode.InternalServerError);
+                    ModelState.AddModelError("Unknown", opStatus.Message);
+                    result = View(journal).WithStatusCode((int)HttpStatusCode.InternalServerError);
                 }
                 else
                 {
@@ -220,6 +224,42 @@ namespace Journals.Web.Controllers
             {
                 result = View(nameof(Edit), journal);
             }
+            return result;
+        }
+
+        [Route("[controller]/edit/{journalId}/issue")]
+        public IActionResult Issue(int journalId)
+        {
+            return View(new IssueViewModel() {JournalId = journalId});
+        }
+
+        [HttpPost]
+        [Route("[controller]/edit/{journalId}/issue")]
+        public IActionResult Issue(IssueViewModel issue)
+        {
+            IActionResult result;
+
+            if (ModelState.IsValid)
+            {
+                var issueToInsert = Mapper.Map<IssueViewModel, Issue>(issue);
+
+                var status = _journalRepository.AddIssue(issueToInsert);
+
+                if (status.Status)
+                {
+                    result = RedirectToAction(nameof(Edit), new {id = issue.JournalId});
+                }
+                else
+                {
+                    ModelState.AddModelError("Unknown", status.Message ?? status.ExceptionInnerMessage ?? status.ExceptionMessage ?? status.ToString());
+                    result = View(issue).WithStatusCode((int)HttpStatusCode.InternalServerError);
+                }
+            }
+            else
+            {
+                result = View(nameof(Issue), issue).WithStatusCode(HttpStatusCode.BadRequest);
+            }
+
             return result;
         }
 

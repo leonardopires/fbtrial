@@ -128,7 +128,10 @@ namespace Journals.Repository
 
         public OperationStatus AddIssue(Issue issue)
         {
-            throw new NotImplementedException();
+            return ExecuteOperations(
+                Add(issue),
+                Save
+                );
         }
 
         public OperationStatus DeleteIssue(Issue issue)

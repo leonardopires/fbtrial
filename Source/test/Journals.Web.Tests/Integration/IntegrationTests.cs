@@ -23,7 +23,7 @@ namespace Journals.Web.Tests.Integration
     public class IntegrationTests : TestBase
     {
 
-        private const string TEST_PASSWORD = "Passw0rd";
+        private const string TEST_PASSWORD = "Passw0rd!";
 
         private readonly TestServer server;
         private readonly HttpClient client;

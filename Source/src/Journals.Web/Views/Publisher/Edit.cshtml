@@ -1,4 +1,5 @@
-﻿@model Journals.Model.JournalUpdateViewModel
+﻿@using Microsoft.AspNetCore.Mvc.ModelBinding
+@model Journals.Model.JournalUpdateViewModel
 
 @{
     ViewBag.Title = "Update Journal";
@@ -14,10 +15,14 @@
         @Html.AntiForgeryToken()
 
         <div class="row">
-            <hr />
-            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-            @Html.HiddenFor(model => model.Id)
-            @Html.HiddenFor(model => model.UserId)
+            @if (ViewData.ModelState.ValidationState == ModelValidationState.Invalid)
+            {
+                <div class="alert alert-danger">
+                    @Html.ValidationSummary(false, "There were validation errors.", new { @class = "text-danger" })
+                    @Html.HiddenFor(model => model.Id)
+                    @Html.HiddenFor(model => model.UserId)
+                </div>
+            }
         </div>
         <div class="row">
             <div class="form-group">
@@ -39,9 +44,42 @@
             </div>
         </div>
         <div class="row">
+            <h4>Issues: </h4>
+        </div>
+        <div class="row">
+            
+            @if (Model.Issues.Any())
+            {
+                <table class="table table-striped col-xs-12">
+                    <thead>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>File</th>
+                    </thead>
+                    <tbody>
+                    @foreach (var issue in Model.Issues)
+                    {
+                        <tr>
+                            <td>@issue.FileId</td>
+                            <td>@issue.FileId</td>
+                            <td>@issue.FileId</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <h4>There are no issues for this Journal.</h4>
+                    <a class="btn btn-info" href="@Url.Action("Issue", new { journalId = Model.Id })">Add Issue</a>
+                </div>
+            }
+        </div>
+        <div class="row">
             <div class="form-group">
-                <div>
-                    <input type="submit" value="Save" class="btn btn-default" /> | @Html.ActionLink("Back to List", "Index")
+                <div class="pull-right">
+                    <input type="submit" value="Save" class="btn btn-primary" /> @Html.ActionLink("Back to List", "Index", "Publisher", htmlAttributes: new { @class = "btn btn-default" })
                 </div>
             </div>
         </div>

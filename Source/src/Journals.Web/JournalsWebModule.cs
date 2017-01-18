@@ -5,6 +5,7 @@ using AutoMapper;
 using Journals.Model;
 using Journals.Repository;
 using Journals.Repository.DataContext;
+using Journals.Web.Models;
 using Journals.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -42,6 +43,11 @@ namespace Journals.Web
 
                             c.CreateMap<Journal, SubscriptionViewModel>();
                             c.CreateMap<SubscriptionViewModel, Journal>();
+
+                            c.CreateMap<Issue, IssueViewModel>();
+                            c.CreateMap<IssueViewModel, Issue>()
+                            .ForMember(m =>m.File, o => o.Ignore());
+
                         });
                     return config.CreateMapper();
                 }).As<IMapper>().SingleInstance();

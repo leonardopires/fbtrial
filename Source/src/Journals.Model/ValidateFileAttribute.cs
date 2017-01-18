@@ -10,7 +10,7 @@ namespace Journals.Model
         public override bool IsValid(object value)
         {
             double maxContentLength = 1024 * 1024 * 3.5; //3.5 MB
-            string AllowedFileExtensions = "pdf";
+            string AllowedFileExtensions = ".pdf";
 
             var file = value as IFormFile;
 
@@ -32,7 +32,7 @@ namespace Journals.Model
 
             if (!AllowedFileExtensions.Equals(Path.GetExtension(file.FileName), StringComparison.InvariantCultureIgnoreCase))
             {
-                ErrorMessage = "Please upload journal in pdf format";
+                ErrorMessage = "Please upload journal in PDF format";
                 return false;
             }
             else if (file.Length > maxContentLength)

@@ -1,0 +1,64 @@
+﻿@using Microsoft.AspNetCore.Mvc.ModelBinding
+@model Journals.Web.Models.IssueViewModel
+
+@{
+    ViewBag.Title = "Add Issue";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Edit Journal</h2>
+
+<div class="container">
+
+    @using (Html.BeginForm("Issue", "Publisher", null, FormMethod.Post, false, new { enctype = "multipart/form-data" }))
+    {
+        @Html.AntiForgeryToken()
+        @if (ViewData.ModelState.ValidationState == ModelValidationState.Invalid)
+        {
+            <div class="alert alert-danger">
+                @Html.ValidationSummary(false, "There were validation errors", new { @class = "text-danger" })
+                @Html.HiddenFor(model => model.Id)
+                @Html.HiddenFor(model => model.JournalId)
+            </div>
+        }
+        <div class="row">
+            <div class="form-group">
+                @Html.LabelFor(model => model.Title, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.Title, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.Title, "", new { @class = "text-danger" })
+                </div>
+            </div>
+        </div>
+        <div class="row">
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.Description, htmlAttributes: new { @class = "control-label col-md-10" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.Description, new { htmlAttributes = new { @class = "form-control", style = "height:300px;w" } })
+                    @Html.ValidationMessageFor(model => model.Description, "", new { @class = "text-danger" })
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                @Html.LabelFor(model => model.File, htmlAttributes: new { @class = "control-label col-md-10" })
+                <div class="col-md-10">
+                    <div class="form-control">
+                        @Html.EditorFor(model => model.File)
+                    </div>
+                    @Html.ValidationMessageFor(model => model.File, "", new { @class = "text-danger" })
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <div class="pull-right">
+                    <input class="btn btn-primary" type="submit" value="Save" class="btn btn-default" /> @Html.ActionLink("Back to List", "Edit", "Publisher", new { id = Model.JournalId }, htmlAttributes: new { @class = "btn btn-default"})
+                </div>
+            </div>
+        </div>
+    }
+</div>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -6,19 +7,6 @@ using Microsoft.AspNetCore.Http;
 
 namespace Journals.Model
 {
-
-    public class IssueViewModel
-    {
-        public int Id { get; set; }
-
-        public int JournalId { get; set; }
-
-        public int? FileId { get; set; }
-
-        [Required]
-        public IFormFile File { get; set; }
-
-    }
 
 
     public class JournalUpdateViewModel : IEquatable<JournalUpdateViewModel>
@@ -32,6 +20,8 @@ namespace Journals.Model
         public string Description { get; set; }
 
         public string UserId { get; set; }
+
+        public List<Issue> Issues { get; set; }
 
         public bool Equals(JournalUpdateViewModel other)
         {
