@@ -2,7 +2,7 @@
 Running the application
 ========================
 
-1. System Requirements
+System Requirements
 ----------------
 
 - .NET Core 1.0.3 
@@ -10,20 +10,20 @@ Running the application
 - SQL Server Express 2014
 
 
-2. Configuration String:
+Configuration String:
 -----------------------
 The Configuration String for the database is configured in the respective `appsettings.json` in Journals.Web:
 
 	<add name="JournalsDB" connectionString="Data Source=localhost;Initial 
 	Catalog=JournalsDB;Integrated Security=True;" providerName="System.Data.SqlClient" />
 
-3. Creating UserProfile Tables & Seeding Users:
+Creating UserProfile Tables & Seeding Users:
 ------------------------------------------------
 
 The database is created using Code-First technique of the Entity Framework.
 Seeding must happen automatically when the application starts.
 
-4. Building
+Building
 ------------
 
 
@@ -50,7 +50,7 @@ the following users and roles:
 |harold     | Passw0rd! | Publisher  |
 
 
-4. Running the application:
+Running the application:
 ------------------------
 
 In the solution folder, you will find Journals.sln. Opening that in Visual Studio, will open 
