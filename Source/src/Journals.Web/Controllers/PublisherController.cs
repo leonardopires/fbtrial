@@ -47,6 +47,9 @@ namespace Journals.Web.Controllers
 
             var allJournals = _journalRepository.GetAllJournals(userId);
             var journals = Mapper.Map<List<Journal>, List<JournalViewModel>>(allJournals);
+
+            journals.ForEach(PopulateIssues);
+
             return View(nameof(Index), journals);
         }
 
@@ -188,17 +191,7 @@ namespace Journals.Web.Controllers
             {
                 var journal = Mapper.Map<Journal, JournalUpdateViewModel>(selectedJournal);
 
-                var issues = _journalRepository.GetIssues(journal.Id);
-
-                if (issues != null)
-                {
-                    foreach (var selectedIssue in issues)
-                    {
-                        var issue = Mapper.Map<Issue, IssueViewModel>(selectedIssue);
-
-                        journal.Issues.Add(issue);
-                    }
-                }
+                PopulateIssues(journal);
 
 
                 result = View(nameof(Edit), journal);
@@ -208,6 +201,36 @@ namespace Journals.Web.Controllers
                 result = NotFound();
             }
             return result;
+        }
+
+        private void PopulateIssues(JournalViewModel journal)
+        {
+            var issues = _journalRepository.GetIssues(journal.Id);
+
+            if (issues != null)
+            {
+                foreach (var selectedIssue in issues)
+                {
+                    var issue = Mapper.Map<Issue, IssueViewModel>(selectedIssue);
+
+                    journal.Issues.Add(issue);
+                }
+            }
+        }
+
+        private void PopulateIssues(JournalUpdateViewModel journal)
+        {
+            var issues = _journalRepository.GetIssues(journal.Id);
+
+            if (issues != null)
+            {
+                foreach (var selectedIssue in issues)
+                {
+                    var issue = Mapper.Map<Issue, IssueViewModel>(selectedIssue);
+
+                    journal.Issues.Add(issue);
+                }
+            }
         }
 
         [HttpPost]

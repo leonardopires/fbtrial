@@ -24,6 +24,7 @@ else
             <tr>
                 <th>Title</th>
                 <th>Description</th>
+                <th>Issues</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -36,6 +37,9 @@ else
                     </td>
                     <td>
                         @Html.DisplayFor(modelItem => item.Description)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Issues.Count)
                     </td>
                     <td>
                         @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |

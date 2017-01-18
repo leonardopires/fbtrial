@@ -29,6 +29,7 @@ namespace Journals.Web.Models
         public int FileId { get; set; }
 
         [ValidateFile]
+        [Required]
         public IFormFile File { get; set; }
 
         public DateTime ModifiedDate { get; set; }

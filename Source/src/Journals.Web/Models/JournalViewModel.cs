@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using Journals.Web.Models;
 
 namespace Journals.Model
 {
@@ -25,6 +27,8 @@ namespace Journals.Model
         /// <value>The description.</value>
         [Required, DataType(DataType.MultilineText)]
         public string Description { get; set; }
+
+        public List<IssueViewModel> Issues { get; set; }
 
         /// <summary>
         /// Gets or sets the user identifier.
