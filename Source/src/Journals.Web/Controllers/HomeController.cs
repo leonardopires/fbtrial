@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Journals.Web.Controllers
 {
     [FormatFilter]
-    public class HomeController : JournalControllerBase
+    public class HomeController : NegotiableContentController
     {
 
         private readonly IHostingEnvironment environment;

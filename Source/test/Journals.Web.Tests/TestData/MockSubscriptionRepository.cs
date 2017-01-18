@@ -2,6 +2,7 @@
 using System.Linq;
 using Journals.Model;
 using Journals.Repository;
+using Journals.Services;
 using LP.Test.Framework.Core;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;

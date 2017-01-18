@@ -2,20 +2,37 @@
   "version": "1.0.0-*",
 
   "dependencies": {
-    "Journals.Model": "1.0.0-*",
+    "Journals.Model": {
+      "version": "1.0.0-*",
+      "target": "project"
+    },
     "NETStandard.Library": "1.6.1",
     "System.Data.SqlClient": "4.3.0",
     "Serilog": "2.4.0-dev-00767",
-    "Microsoft.EntityFrameworkCore.SqlServer": "1.0.1",
-    "Microsoft.EntityFrameworkCore.SqlServer.Design": {
-      "version": "1.0.1",
-      "type": "build"
-    },
     "Microsoft.EntityFrameworkCore.Tools": {
       "version": "1.0.0-preview2-final",
       "type": "build"
+    },
+    "Journals.Services": {
+      "version": "1.0.0-*",
+      "target": "project"
+    },
+    "Journals.Data": {
+      "version": "1.0.0-*",
+      "target": "project"
+    },
+    "LP.Framework": {
+      "version": "1.0.0-*",
+      "target": "project"
+    },
+    "Microsoft.EntityFrameworkCore.SqlServer": {
+      "version": "1.1.0",
+      "type": "build"
+    },
+    "Microsoft.EntityFrameworkCore.SqlServer.Design": {
+      "version": "1.1.0",
+      "type": "build"
     }
-
   },
   "tools": {
     "Microsoft.VisualStudio.Web.CodeGeneration.Tools": {

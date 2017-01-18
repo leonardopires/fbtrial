@@ -1,7 +1,7 @@
 ﻿using System;
 using Journals.Model;
 
-namespace Journals.Repository
+namespace Journals.Services
 {
     public interface IStaticMembershipService : IDisposable
     {

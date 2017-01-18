@@ -1,9 +1,10 @@
 ﻿using Journals.Model;
-using Journals.Repository.DataContext;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Journals.Data;
+using Journals.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using File = Journals.Model.File;

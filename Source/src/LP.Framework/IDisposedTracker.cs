@@ -1,4 +1,4 @@
-﻿namespace Journals.Repository
+﻿namespace LP.Framework
 {
     public interface IDisposedTracker
     {

@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using Journals.Model;
 using System.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,23 +7,6 @@ namespace Journals.Web.Helpers
 {
     public static class HelperExtensions
     {
-        public static void PopulateFile(this IFormFile formFile, File storageFile)
-        {
-            if (formFile != null && formFile.Length > 0)
-            {
-                storageFile.FileName = System.IO.Path.GetFileName(formFile.FileName);
-                storageFile.ContentType = formFile.ContentType;
-
-                using (var readStream = formFile.OpenReadStream())
-                {
-                    using (var reader = new System.IO.BinaryReader(readStream))
-                    {
-                        storageFile.Content = reader.ReadBytes((int)formFile.Length);
-                    }
-                }
-            }
-        }
-
         public static TResult WithStatusCode<TResult>(this TResult result, HttpStatusCode statusCode)
             where TResult : IActionResult
         {

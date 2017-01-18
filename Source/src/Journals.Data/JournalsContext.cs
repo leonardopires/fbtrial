@@ -1,9 +1,8 @@
 ﻿using Journals.Model;
-using System.Linq.Expressions;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using LP.Framework;
 using Microsoft.EntityFrameworkCore;
 
-namespace Journals.Repository.DataContext
+namespace Journals.Data
 {
     public class JournalsContext : ApplicationDbContext, IDisposedTracker
     {
@@ -34,7 +33,7 @@ namespace Journals.Repository.DataContext
         public DbSet<Issue> Issues { get; set; }
 
 
-        /// <inheritdoc cref="IDisposedTracker.IsDisposed"/>
+        /// <inheritdoc cref="LP.Framework.IDisposedTracker.IsDisposed"/>
         public bool IsDisposed { get; set; }
 
         /// <inheritdoc cref="DbContext.OnModelCreating"/>

@@ -1,5 +1,6 @@
 ﻿using System;
 using Journals.Model;
+using LP.Framework;
 using Microsoft.EntityFrameworkCore;
 
 namespace Journals.Repository

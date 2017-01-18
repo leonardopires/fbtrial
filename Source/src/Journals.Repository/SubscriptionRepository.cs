@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Journals.Data;
 using Journals.Model;
-using Journals.Repository.DataContext;
+using Journals.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Journals.Repository

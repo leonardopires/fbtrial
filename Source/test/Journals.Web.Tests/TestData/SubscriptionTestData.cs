@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using Journals.Model;
 using Journals.Repository;
+using Journals.Services;
 using Journals.Web.Tests.Framework;
 using Serilog;
 using Telerik.JustMock;

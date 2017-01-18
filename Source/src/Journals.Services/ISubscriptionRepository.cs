@@ -1,8 +1,8 @@
 ﻿using System;
-using Journals.Model;
 using System.Collections.Generic;
+using Journals.Model;
 
-namespace Journals.Repository
+namespace Journals.Services
 {
     public interface ISubscriptionRepository : IDisposable
     {

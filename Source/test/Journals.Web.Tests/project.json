@@ -3,7 +3,6 @@
   "testRunner": "xunit",
 
   "dependencies": {
-    "Autofac": "4.2.1",
     "Autofac.Extensions.DependencyInjection": "4.0.0",
     "dotnet-test-xunit": "2.2.0-preview2-build1029",
     "FluentAssertions": "4.18.0",
@@ -25,7 +24,8 @@
     },
     "NETStandard.Library": "1.6.1",
     "xunit.runner.visualstudio": "2.2.0-beta4-build1194",
-    "Microsoft.AspNetCore.TestHost": "1.1.0"
+    "Microsoft.AspNetCore.TestHost": "1.1.0",
+    "Autofac": "4.3.0"
   },
   "tools": {
 

@@ -6,6 +6,7 @@ using AutoMapper;
 using FluentAssertions;
 using Journals.Model;
 using Journals.Repository;
+using Journals.Services;
 using Journals.Web.Controllers;
 using Journals.Web.Tests.Framework;
 using Journals.Web.Tests.TestData;

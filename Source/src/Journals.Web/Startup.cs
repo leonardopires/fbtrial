@@ -4,9 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Journals.Data;
 using Journals.Model;
 using Journals.Repository;
-using Journals.Repository.DataContext;
+using LP.Framework.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -97,7 +98,7 @@ namespace Journals.Web
             {
                 app.UseDeveloperExceptionPage();
                 app.UseDatabaseErrorPage();
-                app.UseBrowserLink();
+                //app.UseBrowserLink();
             }
             else
             {

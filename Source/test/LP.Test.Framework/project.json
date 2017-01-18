@@ -2,14 +2,14 @@
   "version": "1.0.0-*",
 
   "dependencies": {
-    "Autofac": "4.2.1",
     "NETStandard.Library": "1.6.1",
     "Serilog": "2.4.0-dev-00767",
     "Serilog.Sinks.Observable": "2.0.1",
     "System.Reactive": "3.1.1",
     "xunit": "2.2.0-beta4-build3444",
     "xunit.runner.visualstudio": "2.2.0-beta4-build1194",
-    "JustMock": "2016.2.426.1"
+    "JustMock": "2016.2.426.1",
+    "Autofac": "4.3.0"
   },
 
   "frameworks": {

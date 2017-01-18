@@ -2,6 +2,7 @@
 using Autofac;
 using Journals.Model;
 using Journals.Repository;
+using Journals.Services;
 using Journals.Web.Tests.Framework;
 using LP.Test.Framework.Core;
 using Microsoft.Extensions.Logging;

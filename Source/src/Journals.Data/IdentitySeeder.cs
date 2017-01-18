@@ -1,14 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Journals.Model;
+using LP.Framework.Data;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Journals.Repository.DataContext
+namespace Journals.Data
 {
    
     public class IdentitySeeder :  IDbSeeder
@@ -17,27 +17,27 @@ namespace Journals.Repository.DataContext
         private readonly ILogger logger;
         private readonly UserManager<ApplicationUser> userManager;
         private readonly RoleManager<ApplicationRole> roleManager;
-        private readonly JournalsContext journalsContext;
-        private readonly IJournalRepository journalRepo;
+        private readonly Func<JournalsContext> journalsContextFactory;
 
         public IdentitySeeder(
             ILogger<IdentitySeeder> logger,
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
-            JournalsContext journalsContext,
-            IJournalRepository journalRepo
+            Func<JournalsContext> journalsContextFactory
             )
         {
             this.userManager = userManager;
             this.logger = logger;
             this.roleManager = roleManager;
-            this.journalsContext = journalsContext;
-            this.journalRepo = journalRepo;
+            this.journalsContextFactory = journalsContextFactory;
         }
 
         public async Task Seed()
         {
-            await journalsContext.Database.EnsureCreatedAsync();
+            using (var context = journalsContextFactory())
+            {
+                context.Database.EnsureCreated();
+            }
 
             await SeedIdentity();
             await SeedJournals();
@@ -46,27 +46,26 @@ namespace Journals.Repository.DataContext
 
         private async Task SeedJournals()
         {
-
-            var user = await userManager.FindByNameAsync("pappu");
-
-            if (await journalRepo.GetJournalCount() == 0)
+            using (var journalsContext = journalsContextFactory())
             {
-                for (int i = 0; i < 10; i++)
-                {
-                    var result = journalRepo.AddJournal(
-                        new Journal()
-                        {
-                            Title = $"Journal {i}",
-                            Description = $"Description {i}",
-                            UserId = user.Id
-                        }
+                var user = await userManager.FindByNameAsync("pappu");
 
-                    );
-                    if (!result.Status)
+                if (await journalsContext.Journals.CountAsync() == 0)
+                {
+                    for (int i = 0; i < 10; i++)
                     {
-                        logger.LogCritical(result.ToString());                        
+                        var result = journalsContext.Journals.Add(
+                            new Journal()
+                            {
+                                Title = $"Journal {i}",
+                                Description = $"Description {i}",
+                                UserId = user.Id
+                            }                    
+                        );
+                        result.State = EntityState.Added;
                     }
                 }
+                await journalsContext.SaveChangesAsync();
             }
         }
 
@@ -172,7 +171,7 @@ namespace Journals.Repository.DataContext
                     }
                     else
                     {
-                        logger.LogError($"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}\n");
+                        logger.LogError($"Failed to create user: {string.Join((string) ", ", (IEnumerable<string>) result.Errors.Select(e => e.Description))}\n");
                     }
                 }
             }

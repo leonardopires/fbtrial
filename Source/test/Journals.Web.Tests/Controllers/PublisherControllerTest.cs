@@ -9,6 +9,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
+using Journals.Services;
 using Journals.Web.Tests.Framework;
 using Journals.Web.Tests.TestData;
 using Microsoft.AspNetCore.Http;
@@ -141,12 +142,12 @@ namespace Journals.Web.Tests.Controllers
 
             if (statusCode != HttpStatusCode.OK)
             {
-                controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid: {0}", controller.ModelState.Dump());
+                controller.ModelState.IsValid.Should().BeTrue("ModelState should be valid: ID: {1} - {0}", controller.ModelState.Dump(), journal.Id);
                 result.Should().BeAssignableTo<StatusCodeResult>().Which.StatusCode.Should().Be((int)statusCode, "the error should have happened in the repository");
             }
             else
             {
-                controller.ModelState.IsValid.Should().BeFalse("ModelState should be invalid: {0}", controller.ModelState.Dump());
+                controller.ModelState.IsValid.Should().BeFalse("ModelState should be invalid: ID: {1} - {0}", controller.ModelState.Dump(), journal.Id);
                 result.Should().NotBeOfType<StatusCodeResult>("validation errors should be identified by ModelState");
 
                 var viewResult = result.Should().BeAssignableTo<ViewResult>("validation errors should appear to the user").Which;
@@ -348,10 +349,11 @@ namespace Journals.Web.Tests.Controllers
             }
             else
             {
-                result.Should()
-                      .BeAssignableTo<StatusCodeResult>()
-                      .Which.StatusCode.Should()
-                      .Be((int)expectedStatusCode);
+                var viewResult = result.Should().BeAssignableTo<ViewResult>("validation error should appear to the user").Which;
+
+                viewResult.ViewName.Should().BeOneOf(nameof(controller.Edit), null);
+                viewResult.Model.Should().Be(viewModel);
+                viewResult.StatusCode.Should().Be((int)HttpStatusCode.InternalServerError);
             }
 
         }

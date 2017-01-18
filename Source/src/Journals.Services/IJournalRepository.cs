@@ -1,9 +1,9 @@
 ﻿using System;
-using Journals.Model;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Journals.Model;
 
-namespace Journals.Repository
+namespace Journals.Services
 {
     public interface IJournalRepository : IDisposable
     {

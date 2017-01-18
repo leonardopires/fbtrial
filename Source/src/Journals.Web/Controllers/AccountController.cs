@@ -4,7 +4,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Journals.Model;
-using Journals.Repository.DataContext;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;

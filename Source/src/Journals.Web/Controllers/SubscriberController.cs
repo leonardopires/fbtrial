@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Journals.Model;
 using Journals.Repository;
+using Journals.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Internal;
@@ -13,7 +14,7 @@ namespace Journals.Web.Controllers
 {
     [Authorize]
     [FormatFilter]
-    public class SubscriberController : JournalControllerBase
+    public class SubscriberController : NegotiableContentController
     {
 
         private readonly IStaticMembershipService membership;

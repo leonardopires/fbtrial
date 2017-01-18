@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Journals.Web.Controllers
 {
-    public class JournalControllerBase : Controller
+    public class NegotiableContentController : Controller
     {
         protected IActionResult Result(string format, object model = null, int statusCode = 200)
         {

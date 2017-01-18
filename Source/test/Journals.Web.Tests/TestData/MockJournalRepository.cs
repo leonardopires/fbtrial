@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Journals.Model;
 using Journals.Repository;
+using Journals.Services;
 using LP.Test.Framework.Core;
 using Serilog;
 using Telerik.JustMock;

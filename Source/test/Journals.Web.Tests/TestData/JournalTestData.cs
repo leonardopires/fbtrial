@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Threading;
 using Journals.Model;
 using LP.Test.Framework.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
+using Microsoft.Extensions.Primitives;
 using Serilog;
 using Telerik.JustMock;
 using Telerik.JustMock.Helpers;
@@ -71,32 +73,8 @@ namespace Journals.Web.Tests.TestData
                 ),
                 Item(
                     CreateJournalViewModel(
-                        id: 4
-                    ),
-                    HttpStatusCode.OK
-                ),
-                Item(
-                    CreateJournalViewModel(
-                        id: 5
-                    ),
-                    HttpStatusCode.OK
-                ),
-                Item(
-                    CreateJournalViewModel(
                         id: 6,
                         description: string.Empty
-                    ),
-                    HttpStatusCode.OK
-                ),
-                Item(
-                    CreateJournalViewModel(
-                        id: 7
-                    ),
-                    HttpStatusCode.OK
-                ),
-                Item(
-                    CreateJournalViewModel(
-                        id: 8
                     ),
                     HttpStatusCode.OK
                 ),
@@ -175,11 +153,11 @@ namespace Journals.Web.Tests.TestData
         public IEnumerable<object[]> GetInvalidUpdatedJournals() =>
             Data(
 
-                Item(
-                    CreateJournalUpdateViewModel(
-                    ),
-                    HttpStatusCode.OK
-                ),
+//                Item(
+//                    CreateJournalUpdateViewModel(
+//                    ),
+//                    HttpStatusCode.OK
+//                ),
                 Item(
                     CreateJournalUpdateViewModel(
                         description: string.Empty
@@ -194,12 +172,12 @@ namespace Journals.Web.Tests.TestData
                     HttpStatusCode.OK
                 )
                 ,
-                Item(
-                    CreateJournalUpdateViewModel(
-                    ),
-                    HttpStatusCode.OK
-                )
-                ,
+//                Item(
+//                    CreateJournalUpdateViewModel(
+//                    ),
+//                    HttpStatusCode.OK
+//                )
+//                ,
                 Item(
                     CreateJournalUpdateViewModel(
                         int.MaxValue
@@ -301,13 +279,13 @@ namespace Journals.Web.Tests.TestData
         public IEnumerable<object[]> GetFilesToUpload()
         {
             return Data(
-                Item(CreateFormFileFromLocalFile("1/09628d25-ea42-490e-965d-cd4ffb6d4e9d.pdf")),
-                Item(CreateFormFileFromLocalFile("1/8305d848-88d2-4cbd-a33b-5c3dcc548056.pdf")),
-                Item(CreateFormFileFromLocalFile("2/75f29692-237b-4116-95ed-645de5c57b4d.pdf"))
+                Item(CreateFormFileFromLocalFile("1/09628d25-ea42-490e-965d-cd4ffb6d4e9d.pdf", "application/pdf")),
+                Item(CreateFormFileFromLocalFile("1/8305d848-88d2-4cbd-a33b-5c3dcc548056.pdf", "application/pdf")),
+                Item(CreateFormFileFromLocalFile("2/75f29692-237b-4116-95ed-645de5c57b4d.pdf", "application/pdf"))
             );
         }
 
-        private IFormFile CreateFormFileFromLocalFile(string fileName)
+        private IFormFile CreateFormFileFromLocalFile(string fileName, string contentType)
         {
             var file = new FileInfo(Path.Combine(Environment.CurrentDirectory, "Testfiles", fileName));
 
@@ -320,7 +298,20 @@ namespace Journals.Web.Tests.TestData
                 readStream.CopyTo(baseStream);
             }
 
-            IFormFile formFile = new FormFile(baseStream, 0, baseStream.Length, file.Name, file.Name);
+            IFormFile formFile = Mock.Create<IFormFile>(); //new FormFile(baseStream, 0, baseStream.Length, file.Name, file.Name);
+
+            formFile.Arrange(f => f.OpenReadStream()).Returns(baseStream);
+            formFile.Arrange(f => f.ContentType).Returns(contentType);
+            formFile.Arrange(f => f.FileName).Returns(fileName);
+            formFile.Arrange(f => f.Length).Returns(baseStream.Length);
+
+            formFile.Arrange(f => f.CopyTo(Arg.IsAny<Stream>()))
+                .DoInstead((Stream stream) => baseStream.CopyTo(stream));
+
+            formFile.Arrange(f => f.CopyToAsync(Arg.IsAny<Stream>(), Arg.IsAny<CancellationToken>()))
+                .Returns((Stream stream, CancellationToken token) => baseStream.CopyToAsync(stream, 81920, token));
+            
+
             return formFile;
         }
 

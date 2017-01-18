@@ -7,7 +7,7 @@ using System.Security.AccessControl;
 using System.Threading.Tasks;
 using AutoMapper;
 using Journals.Model;
-using Journals.Repository;
+using Journals.Services;
 using Journals.Web.Helpers;
 using Journals.Web.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -22,7 +22,7 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 namespace Journals.Web.Controllers
 {
     [Authorize]
-    public class PublisherController : JournalControllerBase
+    public class PublisherController : NegotiableContentController
     {
 
         private readonly IJournalRepository _journalRepository;
@@ -244,11 +244,11 @@ namespace Journals.Web.Controllers
                 var selectedJournal = Mapper.Map<JournalUpdateViewModel, Journal>(journal);
 
                 
-                var opStatus = _journalRepository.UpdateJournal(selectedJournal);
+                var status = _journalRepository.UpdateJournal(selectedJournal);
 
-                if (!opStatus.Status)
+                if (!status.Status)
                 {
-                    ModelState.AddModelError("Unknown", opStatus.Message);
+                    ModelState.AddModelError("Unknown", status.Message ?? status.ExceptionInnerMessage ?? status.ExceptionMessage ?? status.ToString());
                     result = View(journal).WithStatusCode((int)HttpStatusCode.InternalServerError);
                 }
                 else
