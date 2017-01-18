@@ -2,10 +2,32 @@
   "version": "1.0.0-*",
 
   "dependencies": {
-    "System.ComponentModel.Annotations": "4.3.0",
-    "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "1.0.0"
-  },
+    "NETStandard.Library": "1.6.1",
+    "System.Data.SqlClient": "4.3.0",
+    "Serilog": "2.4.0-dev-00767",
+    "Microsoft.EntityFrameworkCore.SqlServer": "1.0.1",
+    "Microsoft.EntityFrameworkCore.SqlServer.Design": {
+      "version": "1.0.1",
+      "type": "build"
+    },
+    "Microsoft.EntityFrameworkCore.Tools": {
+      "version": "1.0.0-preview2-final",
+      "type": "build"
+    }
 
+  },
+  "tools": {
+    "Microsoft.VisualStudio.Web.CodeGeneration.Tools": {
+      "version": "1.0.0-preview2-final",
+      "imports": [
+        "portable-net45+win8"
+      ]
+    },
+    "Microsoft.EntityFrameworkCore.Tools": {
+      "version": "1.0.0-preview2-final",
+      "type": "build"
+    }
+  },
   "frameworks": {
     "net461": {
       "imports": [
