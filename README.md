@@ -25,12 +25,15 @@ b. Hit F5 or Right-click Journals.Web and select Debug > Start a new instance
 
 3. Once the command run successfully, this will create database, UserProfile related tables and 
 the following users and roles:
-	a. UserName: pappu, 	Password: Passw0rd! , Role: Publisher
-	b. UserName: pappy, 	Password: Passw0rd! , Role: Subscriber
-	c. UserName: daniel, 	Password: Passw0rd! , Role: Publisher
-	d. UserName: andrew, 	Password: Passw0rd! , Role: Subscriber
-	e. UserName: serge, 	Password: Passw0rd! , Role: Subscriber
-	f. UserName: harold, 	Password: Passw0rd! , Role: Publisher
+
+| Username | Password | Role  |
+----------------------------------
+|pappu  | Passw0rd! | Publisher |
+|pappy  | Passw0rd! | Subscriber |
+|daniel | Passw0rd! | Publisher  |
+|andrew | Passw0rd! | Subscriber |
+|serge  | Passw0rd! | Subscriber |
+|harold | Passw0rd! | Publisher  |
 
 Running the application:
 ------------------------
