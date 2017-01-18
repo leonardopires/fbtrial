@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using Journals.Web.Models;
 using Microsoft.AspNetCore.Http;
 
 namespace Journals.Model
@@ -21,7 +22,7 @@ namespace Journals.Model
 
         public string UserId { get; set; }
 
-        public List<Issue> Issues { get; set; }
+        public List<IssueViewModel> Issues { get; set; }
 
         public bool Equals(JournalUpdateViewModel other)
         {

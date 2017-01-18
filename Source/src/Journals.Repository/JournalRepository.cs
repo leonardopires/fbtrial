@@ -129,7 +129,25 @@ namespace Journals.Repository
         public OperationStatus AddIssue(Issue issue)
         {
             return ExecuteOperations(
-                Add(issue),
+                context =>
+                {
+                    var journal = GetJournalById(issue.JournalId);
+
+                    if (journal != null)
+                    {
+                        journal.Issues.Add(issue);
+
+                        context.Data.Files.Add(issue.File);
+                        context.Data.Entry(issue.File).State = EntityState.Added;
+
+                        context.Data.Entry(journal).State = EntityState.Modified;
+                        context.Data.Entry(issue).State = EntityState.Added;
+                    }
+                    else
+                    {
+                        context.Result.Message = $"Unable to find a valid Journal with ID {issue.JournalId}";
+                    }
+                },
                 Save
                 );
         }

@@ -9,8 +9,6 @@ namespace Journals.Model
 
         public int JournalId { get; set; }
 
-        [ForeignKey("JournalId")]
-        public Journal Journal { get; set; }
 
         public int FileId { get; set; }
 
@@ -22,11 +20,11 @@ namespace Journals.Model
         public string Description { get; set; }
 
 
-        public DateTime ModifiedDate {get; set;}
+        public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
 
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
-        public DateTime PublishedDate { get; set; }
+        public DateTime PublishedDate { get; set; } = DateTime.UtcNow;
 
     }
 }

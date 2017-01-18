@@ -14,7 +14,7 @@ namespace Journals.Model
 
         public long Length { get; set; }
 
-        public DateTime ModifiedDate { get; set; }
+        public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
 
     }
 }

@@ -187,6 +187,20 @@ namespace Journals.Web.Controllers
             if (selectedJournal != null)
             {
                 var journal = Mapper.Map<Journal, JournalUpdateViewModel>(selectedJournal);
+
+                var issues = _journalRepository.GetIssues(journal.Id);
+
+                if (issues != null)
+                {
+                    foreach (var selectedIssue in issues)
+                    {
+                        var issue = Mapper.Map<Issue, IssueViewModel>(selectedIssue);
+
+                        journal.Issues.Add(issue);
+                    }
+                }
+
+
                 result = View(nameof(Edit), journal);
             }
             else
@@ -206,8 +220,7 @@ namespace Journals.Web.Controllers
             {
                 var selectedJournal = Mapper.Map<JournalUpdateViewModel, Journal>(journal);
 
-                //JournalHelper.PopulateFile(journal.File, selectedJournal);
-
+                
                 var opStatus = _journalRepository.UpdateJournal(selectedJournal);
 
                 if (!opStatus.Status)
@@ -243,6 +256,10 @@ namespace Journals.Web.Controllers
             {
                 var issueToInsert = Mapper.Map<IssueViewModel, Issue>(issue);
 
+                issueToInsert.File = new Model.File();
+
+                issue.File.PopulateFile(issueToInsert.File);
+
                 var status = _journalRepository.AddIssue(issueToInsert);
 
                 if (status.Status)
@@ -265,4 +282,6 @@ namespace Journals.Web.Controllers
 
     }
 }
+
+
 

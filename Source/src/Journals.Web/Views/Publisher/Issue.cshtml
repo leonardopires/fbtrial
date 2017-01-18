@@ -16,7 +16,7 @@
         @if (ViewData.ModelState.ValidationState == ModelValidationState.Invalid)
         {
             <div class="alert alert-danger">
-                @Html.ValidationSummary(false, "There were validation errors", new { @class = "text-danger" })
+                @Html.ValidationSummary(false, "There were errors", new { @class = "text-danger" })
                 @Html.HiddenFor(model => model.Id)
                 @Html.HiddenFor(model => model.JournalId)
             </div>

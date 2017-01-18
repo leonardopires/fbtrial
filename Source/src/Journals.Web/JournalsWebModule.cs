@@ -44,7 +44,9 @@ namespace Journals.Web
                             c.CreateMap<Journal, SubscriptionViewModel>();
                             c.CreateMap<SubscriptionViewModel, Journal>();
 
-                            c.CreateMap<Issue, IssueViewModel>();
+                            c.CreateMap<Issue, IssueViewModel>()
+                            .ForMember(m => m.File, o => o.Ignore());
+
                             c.CreateMap<IssueViewModel, Issue>()
                             .ForMember(m =>m.File, o => o.Ignore());
 

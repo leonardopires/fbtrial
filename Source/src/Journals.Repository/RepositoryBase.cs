@@ -86,13 +86,19 @@ namespace Journals.Repository
         protected virtual OperationStatus ExecuteOperations(params Action<OperationContext<TDataContext>>[] operations)
         {
             using (var operationContext = new OperationContext<TDataContext>(contextFactory))
-            {                
+            {
+                var operationContextResult = operationContext.Result;
                 try
                 {
 
                     foreach (var operation in operations)
                     {
                         operation?.Invoke(operationContext);
+                    }
+                    if (operationContextResult.RecordsAffected == 0
+                        && !operationContextResult.Status)
+                    {
+                        operationContextResult.Message = $"No rows affected: {operationContextResult.Message}";
                     }
                 }
                 catch (Exception e)
@@ -105,7 +111,7 @@ namespace Journals.Repository
                     }
 
                 }
-                return operationContext.Result;
+                return operationContextResult;
             }
 
         }

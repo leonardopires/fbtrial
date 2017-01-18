@@ -18,7 +18,7 @@
             @if (ViewData.ModelState.ValidationState == ModelValidationState.Invalid)
             {
                 <div class="alert alert-danger">
-                    @Html.ValidationSummary(false, "There were validation errors.", new { @class = "text-danger" })
+                    @Html.ValidationSummary(false, "There were errors.", new { @class = "text-danger" })
                     @Html.HiddenFor(model => model.Id)
                     @Html.HiddenFor(model => model.UserId)
                 </div>
@@ -44,38 +44,48 @@
             </div>
         </div>
         <div class="row">
-            <h4>Issues: </h4>
+            <div class="nav navbar navbar-default">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="btn btn-info navbar-btn" href="@Url.Action("Issue", new {journalId = Model.Id})">Add Issue</a>
+                        <span class="navbar-brand">
+                            Issues
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="row">
-            
-            @if (Model.Issues.Any())
-            {
+
+        if (Model.Issues.Any())
+        {
+            <div class="row">
                 <table class="table table-striped col-xs-12">
                     <thead>
                     <th>Title</th>
                     <th>Description</th>
-                    <th>File</th>
+                    <th>Date</th>
                     </thead>
                     <tbody>
-                    @foreach (var issue in Model.Issues)
+                        @foreach (var issue in Model.Issues)
                     {
-                        <tr>
-                            <td>@issue.FileId</td>
-                            <td>@issue.FileId</td>
-                            <td>@issue.FileId</td>
-                        </tr>
-                    }
+                            <tr>
+                                <td>@issue.Title</td>
+                                <td>@issue.Description</td>
+                                <td>@issue.PublishedDate</td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
-            }
-            else
-            {
+            </div>
+        }
+        else
+        {
+            <div class="row">
                 <div class="alert alert-info">
-                    <h4>There are no issues for this Journal.</h4>
-                    <a class="btn btn-info" href="@Url.Action("Issue", new { journalId = Model.Id })">Add Issue</a>
+                    <h4>No issues found for this Journal.</h4>
                 </div>
-            }
-        </div>
+            </div>
+        }
         <div class="row">
             <div class="form-group">
                 <div class="pull-right">
